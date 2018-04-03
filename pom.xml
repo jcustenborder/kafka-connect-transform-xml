@@ -28,7 +28,7 @@
     </parent>
     <artifactId>kafka-connect-transform-xml</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <name>kafka-connect-transform-schema</name>
+    <name>kafka-connect-transform-xml</name>
     <url>https://github.com/jcustenborder/kafka-connect-transform-xml</url>
     <inceptionYear>2017</inceptionYear>
     <description>Kafka Connect transformation for handling Xml data based on a XSD. This transformation will convert text based Xml</description>
