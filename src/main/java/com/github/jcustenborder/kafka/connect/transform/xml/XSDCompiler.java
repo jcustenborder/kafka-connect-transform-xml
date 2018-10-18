@@ -15,6 +15,7 @@
  */
 package com.github.jcustenborder.kafka.connect.transform.xml;
 
+import com.github.jcustenborder.kafka.connect.xml.Connectable;
 import com.github.jcustenborder.kafka.connect.xml.KafkaConnectPlugin;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -23,12 +24,14 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.sun.codemodel.JCodeModel;
 import com.sun.tools.xjc.Options;
+import com.sun.tools.xjc.api.ErrorListener;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import com.sun.tools.xjc.api.SchemaCompiler;
 import com.sun.tools.xjc.api.XJC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXParseException;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -83,7 +86,27 @@ public class XSDCompiler implements Closeable {
       }
       schemaCompiler.setDefaultPackageName(state.packageName());
       S2JJAXBModel model = schemaCompiler.bind();
-      JCodeModel jCodeModel = model.generateCode(null, null);
+      JCodeModel jCodeModel = model.generateCode(null, new ErrorListener() {
+        @Override
+        public void error(SAXParseException e) {
+          log.error("Error", e);
+        }
+
+        @Override
+        public void fatalError(SAXParseException e) {
+          log.error("fatalError", e);
+        }
+
+        @Override
+        public void warning(SAXParseException e) {
+          log.error("warning", e);
+        }
+
+        @Override
+        public void info(SAXParseException e) {
+          log.info("info", e);
+        }
+      });
 
       log.trace("compileContext() - Building model to {}", tempDirectory);
       jCodeModel.build(tempDirectory);
@@ -104,11 +127,15 @@ public class XSDCompiler implements Closeable {
       );
     }
 
+    final String classPath = System.getProperty("java.class.path");
+    List<String> classPathList = new ArrayList<>();
+    classPathList.addAll(ImmutableList.copyOf(classPath.split(":")));
+    final URL connectableUrl = Connectable.class.getProtectionDomain().getCodeSource().getLocation();
+    classPathList.add(connectableUrl.toString());
 
     List<String> optionList = new ArrayList<>();
     optionList.add("-classpath");
-    optionList.add(System.getProperty("java.class.path"));
-
+    optionList.add(Joiner.on(':').join(classPathList));
 
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
     JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
