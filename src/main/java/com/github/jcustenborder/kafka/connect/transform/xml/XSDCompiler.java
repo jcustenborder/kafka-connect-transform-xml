@@ -46,6 +46,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -60,11 +61,23 @@ public class XSDCompiler implements Closeable {
   private static final Logger log = LoggerFactory.getLogger(XSDCompiler.class);
   final List<SchemaState> schemas;
   final File tempDirectory;
+  final URLClassLoader classLoader;
 
   public XSDCompiler(List<SchemaState> schemas) {
     this.schemas = schemas;
     this.tempDirectory = Files.createTempDir();
+    try {
+      this.classLoader = new URLClassLoader(
+          new URL[]{
+              tempDirectory.toURL()
+          },
+          Connectable.class.getClassLoader()
+      );
+    } catch (MalformedURLException e) {
+      throw new IllegalStateException(e);
+    }
   }
+
 
   public JAXBContext compileContext() throws IOException {
 
@@ -165,11 +178,7 @@ public class XSDCompiler implements Closeable {
       }
     }
 
-    URLClassLoader classLoader = new URLClassLoader(
-        new URL[]{
-            tempDirectory.toURL(), Connectable.class.getProtectionDomain().getCodeSource().getLocation()
-        }
-    );
+
     List<Class<?>> objectFactories = new ArrayList<>();
 
     for (String s : objectFactoryClasses) {
@@ -218,14 +227,16 @@ public class XSDCompiler implements Closeable {
   static class SchemaState {
     final URL url;
     final byte[] content;
+    final String packageName;
 
-    SchemaState(URL url, byte[] content) {
+    SchemaState(URL url, byte[] content, String packageName) {
       this.url = url;
       this.content = content;
+      this.packageName = packageName;
     }
 
-    public static SchemaState of(URL url, byte[] content) {
-      return new SchemaState(url, content);
+    public static SchemaState of(URL url, byte[] content, String packageName) {
+      return new SchemaState(url, content, packageName);
     }
 
     private String hash() {
@@ -255,7 +266,7 @@ public class XSDCompiler implements Closeable {
             e
         );
       }
-      schemas.add(SchemaState.of(url, buffer));
+      schemas.add(SchemaState.of(url, buffer, config.xjcPackage));
     }
 
     return new XSDCompiler(ImmutableList.copyOf(schemas));

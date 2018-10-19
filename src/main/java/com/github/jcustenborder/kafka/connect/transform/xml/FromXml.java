@@ -86,8 +86,19 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
       Connectable connectable = (Connectable) element;
       struct = connectable.toConnectStruct();
     } else if (element instanceof JAXBElement) {
-      JAXBElement<Connectable> connectableJAXBElement = (JAXBElement<Connectable>) element;
-      struct = connectableJAXBElement.getValue().toConnectStruct();
+      JAXBElement jaxbElement = (JAXBElement) element;
+
+      if (jaxbElement.getValue() instanceof Connectable) {
+        Connectable connectable = (Connectable) jaxbElement.getValue();
+        struct = connectable.toConnectStruct();
+      } else {
+        throw new DataException(
+            String.format(
+                "%s does not implement Connectable",
+                jaxbElement.getValue().getClass()
+            )
+        );
+      }
     } else {
       throw new DataException(
           String.format("%s is not a supported type", element.getClass())
