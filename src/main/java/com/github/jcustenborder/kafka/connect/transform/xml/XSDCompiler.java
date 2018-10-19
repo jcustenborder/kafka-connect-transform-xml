@@ -201,22 +201,22 @@ public class XSDCompiler implements Closeable {
 
   @Override
   public void close() throws IOException {
-    log.trace("close() - Cleaning up temp directory '{}'", this.tempDirectory);
-    java.nio.file.Files.walkFileTree(this.tempDirectory.toPath(), new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        log.trace("close() - Deleting {}", file);
-        java.nio.file.Files.delete(file);
-        return FileVisitResult.CONTINUE;
-      }
-
-      @Override
-      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-        log.trace("close() - Deleting {}", dir);
-        java.nio.file.Files.delete(dir);
-        return FileVisitResult.CONTINUE;
-      }
-    });
+//    log.trace("close() - Cleaning up temp directory '{}'", this.tempDirectory);
+//    java.nio.file.Files.walkFileTree(this.tempDirectory.toPath(), new SimpleFileVisitor<Path>() {
+//      @Override
+//      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+//        log.trace("close() - Deleting {}", file);
+//        java.nio.file.Files.delete(file);
+//        return FileVisitResult.CONTINUE;
+//      }
+//
+//      @Override
+//      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+//        log.trace("close() - Deleting {}", dir);
+//        java.nio.file.Files.delete(dir);
+//        return FileVisitResult.CONTINUE;
+//      }
+//    });
   }
 
   static class SchemaState {
