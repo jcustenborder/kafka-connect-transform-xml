@@ -19,7 +19,6 @@ import com.github.jcustenborder.kafka.connect.xml.Connectable;
 import com.github.jcustenborder.kafka.connect.xml.KafkaConnectPlugin;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.sun.codemodel.JCodeModel;
@@ -238,7 +237,7 @@ public class XSDCompiler implements Closeable {
     public static SchemaState of(URL url, byte[] content, String packageName) {
       return new SchemaState(url, content, packageName);
     }
-    
+
     public String packageName() {
       return this.packageName;
     }
