@@ -61,9 +61,8 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
   @Override
   protected SchemaAndValue processString(R record, org.apache.kafka.connect.data.Schema inputSchema, String input) {
     try (Reader reader = new StringReader(input)) {
-      JAXBElement<Connectable> element = (JAXBElement<Connectable>) this.unmarshaller.unmarshal(reader);
-      Struct struct = element.getValue().toConnectStruct();
-      return new SchemaAndValue(struct.schema(), struct);
+      Object element = this.unmarshaller.unmarshal(reader);
+      return schemaAndValue(element);
     } catch (IOException | JAXBException e) {
       throw new DataException("Exception thrown while processing xml", e);
     }
@@ -73,13 +72,28 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
   protected SchemaAndValue processBytes(R record, org.apache.kafka.connect.data.Schema inputSchema, byte[] input) {
     try (InputStream inputStream = new ByteArrayInputStream(input)) {
       try (Reader reader = new InputStreamReader(inputStream)) {
-        JAXBElement<Connectable> element = (JAXBElement<Connectable>) this.unmarshaller.unmarshal(reader);
-        Struct struct = element.getValue().toConnectStruct();
-        return new SchemaAndValue(struct.schema(), struct);
+        Object element = this.unmarshaller.unmarshal(reader);
+        return schemaAndValue(element);
       }
     } catch (IOException | JAXBException e) {
       throw new DataException("Exception thrown while processing xml", e);
     }
+  }
+
+  private SchemaAndValue schemaAndValue(Object element) {
+    final Struct struct;
+    if (element instanceof Connectable) {
+      Connectable connectable = (Connectable) element;
+      struct = connectable.toConnectStruct();
+    } else if (element instanceof JAXBElement) {
+      JAXBElement<Connectable> connectableJAXBElement = (JAXBElement<Connectable>) element;
+      struct = connectableJAXBElement.getValue().toConnectStruct();
+    } else {
+      throw new DataException(
+          String.format("%s is not a supported type", element.getClass())
+      );
+    }
+    return new SchemaAndValue(struct.schema(), struct);
   }
 
   JAXBContext context;
