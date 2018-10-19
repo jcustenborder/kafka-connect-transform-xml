@@ -238,13 +238,9 @@ public class XSDCompiler implements Closeable {
     public static SchemaState of(URL url, byte[] content, String packageName) {
       return new SchemaState(url, content, packageName);
     }
-
-    private String hash() {
-      return Hashing.sha1().hashBytes(this.content).toString();
-    }
-
+    
     public String packageName() {
-      return String.format("xsd%s", hash());
+      return this.packageName;
     }
 
     public String objectFactoryClass() {
