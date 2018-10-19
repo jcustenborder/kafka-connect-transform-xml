@@ -30,11 +30,16 @@ class FromXmlConfig extends AbstractConfig {
   public static final String SCHEMA_PATH_CONFIG = "schema.path";
   static final String SCHEMA_PATH_DOC = "Urls to the schemas to load. http and https paths are supported";
 
+  public static final String PACKAGE_CONFIG = "package";
+  static final String PACKAGE_DOC = "The java package xjc will use to generate the source code in. This name will be applied to the resulting schema";
+
   public final List<URL> schemaUrls;
+  public final String xjcPackage;
 
   public FromXmlConfig(Map<?, ?> originals) {
     super(config(), originals);
     this.schemaUrls = ConfigUtils.urls(this, SCHEMA_PATH_CONFIG);
+    this.xjcPackage = getString(PACKAGE_CONFIG);
   }
 
   public static ConfigDef config() {
@@ -44,6 +49,12 @@ class FromXmlConfig extends AbstractConfig {
                 .documentation(SCHEMA_PATH_DOC)
                 .importance(ConfigDef.Importance.HIGH)
                 .validator(new ValidUrl())
+                .build()
+        ).define(
+            ConfigKeyBuilder.of(PACKAGE_CONFIG, ConfigDef.Type.STRING)
+                .documentation(PACKAGE_DOC)
+                .importance(ConfigDef.Importance.HIGH)
+                .defaultValue(FromXmlConfig.class.getPackage().getName() + ".model")
                 .build()
         );
   }
