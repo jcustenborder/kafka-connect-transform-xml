@@ -53,8 +53,10 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -71,10 +73,12 @@ public class XSDCompiler implements Closeable {
   public JAXBContext compileContext() throws IOException {
 
     List<String> objectFactoryClasses = new ArrayList<>();
-
+    objectFactoryClasses.add(Connectable.class.getName());
+    Set<String> packages = new LinkedHashSet<>();
     for (SchemaState state : this.schemas) {
       log.info("compileContext() - Generating source for {}", state.url);
       objectFactoryClasses.add(state.objectFactoryClass());
+      packages.add(state.packageName());
       SchemaCompiler schemaCompiler = XJC.createSchemaCompiler();
       Options options = schemaCompiler.getOptions();
       options.activePlugins.add(new KafkaConnectPlugin());
@@ -165,11 +169,17 @@ public class XSDCompiler implements Closeable {
       }
     }
 
-    URLClassLoader classLoader = new URLClassLoader(new URL[]{tempDirectory.toURL()});
+    URLClassLoader classLoader = new URLClassLoader(
+        new URL[]{
+            tempDirectory.toURL(), Connectable.class.getProtectionDomain().getCodeSource().getLocation()
+        }
+    );
     List<Class<?>> objectFactories = new ArrayList<>();
+
     for (String s : objectFactoryClasses) {
       try {
         log.info("Loading {}", s);
+
         objectFactories.add(
             classLoader.loadClass(s)
         );
@@ -183,7 +193,7 @@ public class XSDCompiler implements Closeable {
     log.info("Creating JAXBContext");
 
     try {
-      return JAXBContext.newInstance(objectFactories.toArray(new Class<?>[objectFactories.size()]));
+      return JAXBContext.newInstance(Joiner.on(':').join(packages), classLoader);
     } catch (JAXBException e) {
       throw new IllegalStateException(e);
     }
