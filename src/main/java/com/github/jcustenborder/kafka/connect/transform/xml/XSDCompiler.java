@@ -23,14 +23,13 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.sun.codemodel.JCodeModel;
 import com.sun.tools.xjc.Options;
-import com.sun.tools.xjc.api.ErrorListener;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import com.sun.tools.xjc.api.SchemaCompiler;
 import com.sun.tools.xjc.api.XJC;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXParseException;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -90,6 +89,8 @@ public class XSDCompiler implements Closeable {
       SchemaCompiler schemaCompiler = XJC.createSchemaCompiler();
       Options options = schemaCompiler.getOptions();
       options.activePlugins.add(new KafkaConnectPlugin());
+      options.strictCheck = false;
+
       try (InputStream inputStream = new ByteArrayInputStream(state.content)) {
         InputSource inputSource = new InputSource();
         inputSource.setByteStream(inputStream);
@@ -97,28 +98,14 @@ public class XSDCompiler implements Closeable {
         schemaCompiler.parseSchema(inputSource);
       }
       schemaCompiler.setDefaultPackageName(state.packageName());
+      schemaCompiler.setErrorListener(new ConnectErrorListener(log));
       S2JJAXBModel model = schemaCompiler.bind();
-      JCodeModel jCodeModel = model.generateCode(null, new ErrorListener() {
-        @Override
-        public void error(SAXParseException e) {
-          log.error("Error", e);
-        }
 
-        @Override
-        public void fatalError(SAXParseException e) {
-          log.error("fatalError", e);
-        }
+      if (null == model) {
+        throw new ConnectException("Schema compiler could not bind schema.");
+      }
 
-        @Override
-        public void warning(SAXParseException e) {
-          log.error("warning", e);
-        }
-
-        @Override
-        public void info(SAXParseException e) {
-          log.info("info", e);
-        }
-      });
+      JCodeModel jCodeModel = model.generateCode(null, new ConnectErrorListener(log));
 
       log.trace("compileContext() - Building model to {}", tempDirectory);
       jCodeModel.build(tempDirectory);
