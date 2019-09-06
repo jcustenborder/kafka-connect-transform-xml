@@ -43,6 +43,9 @@ import java.util.Map;
 public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransformation<R> {
   private static final Logger log = LoggerFactory.getLogger(FromXml.class);
   FromXmlConfig config;
+  JAXBContext context;
+  Unmarshaller unmarshaller;
+  XSDCompiler compiler;
 
   @Override
   public ConfigDef config() {
@@ -84,13 +87,13 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
     final Struct struct;
     if (element instanceof Connectable) {
       Connectable connectable = (Connectable) element;
-      struct = connectable.toConnectStruct();
+      struct = connectable.toStruct();
     } else if (element instanceof JAXBElement) {
       JAXBElement jaxbElement = (JAXBElement) element;
 
       if (jaxbElement.getValue() instanceof Connectable) {
         Connectable connectable = (Connectable) jaxbElement.getValue();
-        struct = connectable.toConnectStruct();
+        struct = connectable.toStruct();
       } else {
         throw new DataException(
             String.format(
@@ -107,14 +110,10 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
     return new SchemaAndValue(struct.schema(), struct);
   }
 
-  JAXBContext context;
-  Unmarshaller unmarshaller;
-  XSDCompiler compiler;
-
   @Override
   public void configure(Map<String, ?> settings) {
     this.config = new FromXmlConfig(settings);
-    this.compiler = XSDCompiler.create(this.config);
+    this.compiler = new XSDCompiler(this.config);
 
     try {
       this.context = compiler.compileContext();

@@ -38,7 +38,7 @@ class ConnectErrorListener implements ErrorListener {
 
   @Override
   public void warning(SAXParseException e) {
-    log.error("warning", e);
+    log.warn("warning", e);
   }
 
   @Override
