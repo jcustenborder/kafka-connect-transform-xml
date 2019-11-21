@@ -15,10 +15,10 @@
  */
 package com.github.jcustenborder.kafka.connect.transform.xml;
 
-import com.github.jcustenborder.kafka.connect.transform.common.BaseTransformation;
 import com.github.jcustenborder.kafka.connect.utils.config.Description;
 import com.github.jcustenborder.kafka.connect.utils.config.DocumentationTip;
 import com.github.jcustenborder.kafka.connect.utils.config.Title;
+import com.github.jcustenborder.kafka.connect.utils.transformation.BaseKeyValueTransformation;
 import com.github.jcustenborder.kafka.connect.xml.Connectable;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
@@ -40,12 +40,19 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
 
-public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransformation<R> {
+@Title("FromXML")
+@Description("This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.")
+@DocumentationTip("This transformation is used to manipulate fields in the Key of the record.")
+public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
   private static final Logger log = LoggerFactory.getLogger(FromXml.class);
   FromXmlConfig config;
   JAXBContext context;
   Unmarshaller unmarshaller;
   XSDCompiler compiler;
+
+  protected FromXml(boolean isKey) {
+    super(isKey);
+  }
 
   @Override
   public ConfigDef config() {
@@ -128,13 +135,16 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
     }
   }
 
-  @Title("FromXML(Key)")
-  @Description("This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.")
-  @DocumentationTip("This transformation is used to manipulate fields in the Key of the record.")
+
   public static class Key<R extends ConnectRecord<R>> extends FromXml<R> {
+
+    protected Key() {
+      super(true);
+    }
+
     @Override
     public R apply(R r) {
-      final SchemaAndValue transformed = process(r, r.keySchema(), r.key());
+      final SchemaAndValue transformed = process(r, new SchemaAndValue(r.keySchema(), r.key()));
 
       return r.newRecord(
           r.topic(),
@@ -148,13 +158,14 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
     }
   }
 
-  @Title("FromXML(value)")
-  @Description("This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.")
-  @DocumentationTip("This transformation is used to manipulate fields in the Key of the record.")
   public static class Value<R extends ConnectRecord<R>> extends FromXml<R> {
+    protected Value() {
+      super(false);
+    }
+
     @Override
     public R apply(R r) {
-      final SchemaAndValue transformed = process(r, r.valueSchema(), r.value());
+      final SchemaAndValue transformed = process(r, new SchemaAndValue(r.valueSchema(), r.value()));
 
       return r.newRecord(
           r.topic(),

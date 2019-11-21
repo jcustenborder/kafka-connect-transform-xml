@@ -116,7 +116,7 @@ public class XSDCompiler implements Closeable {
 
     List<File> sourceFiles =
         StreamSupport.stream(
-            Files.fileTreeTraverser().preOrderTraversal(tempDirectory).spliterator(),
+            Files.fileTraverser().depthFirstPostOrder(tempDirectory).spliterator(),
             false
         )
             .filter(File::isFile)
