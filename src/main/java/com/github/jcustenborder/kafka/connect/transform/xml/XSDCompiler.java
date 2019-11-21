@@ -19,18 +19,16 @@ import com.github.jcustenborder.kafka.connect.xml.Connectable;
 import com.github.jcustenborder.kafka.connect.xml.KafkaConnectPlugin;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.sun.codemodel.JCodeModel;
 import com.sun.tools.xjc.Options;
-import com.sun.tools.xjc.api.ErrorListener;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import com.sun.tools.xjc.api.SchemaCompiler;
 import com.sun.tools.xjc.api.XJC;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXParseException;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -40,11 +38,9 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -58,12 +54,12 @@ import java.util.stream.StreamSupport;
 
 public class XSDCompiler implements Closeable {
   private static final Logger log = LoggerFactory.getLogger(XSDCompiler.class);
-  final List<SchemaState> schemas;
   final File tempDirectory;
   final URLClassLoader classLoader;
+  final FromXmlConfig config;
 
-  public XSDCompiler(List<SchemaState> schemas) {
-    this.schemas = schemas;
+  public XSDCompiler(FromXmlConfig config) {
+    this.config = config;
     this.tempDirectory = Files.createTempDir();
     try {
       this.classLoader = new URLClassLoader(
@@ -80,53 +76,47 @@ public class XSDCompiler implements Closeable {
 
   public JAXBContext compileContext() throws IOException {
 
+
     List<String> objectFactoryClasses = new ArrayList<>();
     objectFactoryClasses.add(Connectable.class.getName());
     Set<String> packages = new LinkedHashSet<>();
-    for (SchemaState state : this.schemas) {
-      log.info("compileContext() - Generating source for {}", state.url);
-      objectFactoryClasses.add(state.objectFactoryClass());
-      packages.add(state.packageName());
-      SchemaCompiler schemaCompiler = XJC.createSchemaCompiler();
-      Options options = schemaCompiler.getOptions();
-      options.activePlugins.add(new KafkaConnectPlugin());
-      try (InputStream inputStream = new ByteArrayInputStream(state.content)) {
-        InputSource inputSource = new InputSource();
-        inputSource.setByteStream(inputStream);
-        inputSource.setSystemId(state.url.toString());
-        schemaCompiler.parseSchema(inputSource);
-      }
-      schemaCompiler.setDefaultPackageName(state.packageName());
-      S2JJAXBModel model = schemaCompiler.bind();
-      JCodeModel jCodeModel = model.generateCode(null, new ErrorListener() {
-        @Override
-        public void error(SAXParseException e) {
-          log.error("Error", e);
-        }
+    packages.add(config.xjcPackage);
+    String objectFactoryClass = String.format("%s.ObjectFactory", this.config.xjcPackage);
+    objectFactoryClasses.add(objectFactoryClass);
 
-        @Override
-        public void fatalError(SAXParseException e) {
-          log.error("fatalError", e);
-        }
+    SchemaCompiler schemaCompiler = XJC.createSchemaCompiler();
 
-        @Override
-        public void warning(SAXParseException e) {
-          log.error("warning", e);
-        }
+    Options options = schemaCompiler.getOptions();
+    options.activePlugins.add(new KafkaConnectPlugin());
+    options.strictCheck = this.config.optionsStrictCheck;
 
-        @Override
-        public void info(SAXParseException e) {
-          log.info("info", e);
-        }
-      });
+    options.automaticNameConflictResolution = this.config.optionsAutomaticNameConflictResolution;
+    schemaCompiler.setDefaultPackageName(this.config.xjcPackage);
+    schemaCompiler.setErrorListener(new ConnectErrorListener(log));
+    schemaCompiler.setEntityResolver(options.entityResolver);
 
-      log.trace("compileContext() - Building model to {}", tempDirectory);
-      jCodeModel.build(tempDirectory);
+    for (URL schemaUrl : this.config.schemaUrls) {
+      log.info("compileContext() - Generating source for {}", schemaUrl);
+
+      InputSource inputSource = new InputSource();
+      inputSource.setSystemId(schemaUrl.toString());
+      schemaCompiler.parseSchema(inputSource);
     }
+
+    S2JJAXBModel model = schemaCompiler.bind();
+
+    if (null == model) {
+      throw new ConnectException("Schema compiler could not bind schema.");
+    }
+
+    JCodeModel jCodeModel = model.generateCode(null, new ConnectErrorListener(log));
+
+    log.trace("compileContext() - Building model to {}", tempDirectory);
+    jCodeModel.build(tempDirectory);
 
     List<File> sourceFiles =
         StreamSupport.stream(
-            Files.fileTreeTraverser().preOrderTraversal(tempDirectory).spliterator(),
+            Files.fileTraverser().depthFirstPostOrder(tempDirectory).spliterator(),
             false
         )
             .filter(File::isFile)
@@ -223,47 +213,47 @@ public class XSDCompiler implements Closeable {
 //    });
   }
 
-  static class SchemaState {
-    final URL url;
-    final byte[] content;
-    final String packageName;
+//  static class SchemaState {
+//    final URL url;
+//    final byte[] content;
+//    final String packageName;
+//
+//    SchemaState(URL url, byte[] content, String packageName) {
+//      this.url = url;
+//      this.content = content;
+//      this.packageName = packageName;
+//    }
+//
+//    public static SchemaState of(URL url, byte[] content, String packageName) {
+//      return new SchemaState(url, content, packageName);
+//    }
+//
+//    public String packageName() {
+//      return this.packageName;
+//    }
+//
+//    public String objectFactoryClass() {
+//      return String.format("%s.ObjectFactory", packageName());
+//    }
+//  }
 
-    SchemaState(URL url, byte[] content, String packageName) {
-      this.url = url;
-      this.content = content;
-      this.packageName = packageName;
-    }
 
-    public static SchemaState of(URL url, byte[] content, String packageName) {
-      return new SchemaState(url, content, packageName);
-    }
-
-    public String packageName() {
-      return this.packageName;
-    }
-
-    public String objectFactoryClass() {
-      return String.format("%s.ObjectFactory", packageName());
-    }
-  }
-
-
-  public static XSDCompiler create(FromXmlConfig config) {
-    List<SchemaState> schemas = new ArrayList<>();
-    for (URL url : config.schemaUrls) {
-      log.info("Loading schema from {}", url);
-      final byte[] buffer;
-      try (InputStream inputStream = url.openStream()) {
-        buffer = ByteStreams.toByteArray(inputStream);
-      } catch (IOException e) {
-        throw new IllegalStateException(
-            String.format("Exception thrown while loading schema. Url='{}'", url),
-            e
-        );
-      }
-      schemas.add(SchemaState.of(url, buffer, config.xjcPackage));
-    }
-
-    return new XSDCompiler(ImmutableList.copyOf(schemas));
-  }
+//  public static XSDCompiler create(FromXmlConfig config) {
+//    List<SchemaState> schemas = new ArrayList<>();
+//    for (URL url : config.schemaUrls) {
+//      log.info("Loading schema from {}", url);
+//      final byte[] buffer;
+//      try (InputStream inputStream = url.openStream()) {
+//        buffer = ByteStreams.toByteArray(inputStream);
+//      } catch (IOException e) {
+//        throw new IllegalStateException(
+//            String.format("Exception thrown while loading schema. Url='{}'", url),
+//            e
+//        );
+//      }
+//      schemas.add(SchemaState.of(url, buffer, config.xjcPackage));
+//    }
+//
+//    return new XSDCompiler(ImmutableList.copyOf(schemas));
+//  }
 }

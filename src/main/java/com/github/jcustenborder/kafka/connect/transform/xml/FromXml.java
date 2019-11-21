@@ -15,10 +15,10 @@
  */
 package com.github.jcustenborder.kafka.connect.transform.xml;
 
-import com.github.jcustenborder.kafka.connect.transform.common.BaseTransformation;
 import com.github.jcustenborder.kafka.connect.utils.config.Description;
 import com.github.jcustenborder.kafka.connect.utils.config.DocumentationTip;
 import com.github.jcustenborder.kafka.connect.utils.config.Title;
+import com.github.jcustenborder.kafka.connect.utils.transformation.BaseKeyValueTransformation;
 import com.github.jcustenborder.kafka.connect.xml.Connectable;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
@@ -40,9 +40,19 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
 
-public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransformation<R> {
+@Title("FromXML")
+@Description("This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.")
+@DocumentationTip("This transformation is used to manipulate fields in the Key of the record.")
+public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
   private static final Logger log = LoggerFactory.getLogger(FromXml.class);
   FromXmlConfig config;
+  JAXBContext context;
+  Unmarshaller unmarshaller;
+  XSDCompiler compiler;
+
+  protected FromXml(boolean isKey) {
+    super(isKey);
+  }
 
   @Override
   public ConfigDef config() {
@@ -84,13 +94,13 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
     final Struct struct;
     if (element instanceof Connectable) {
       Connectable connectable = (Connectable) element;
-      struct = connectable.toConnectStruct();
+      struct = connectable.toStruct();
     } else if (element instanceof JAXBElement) {
       JAXBElement jaxbElement = (JAXBElement) element;
 
       if (jaxbElement.getValue() instanceof Connectable) {
         Connectable connectable = (Connectable) jaxbElement.getValue();
-        struct = connectable.toConnectStruct();
+        struct = connectable.toStruct();
       } else {
         throw new DataException(
             String.format(
@@ -107,14 +117,10 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
     return new SchemaAndValue(struct.schema(), struct);
   }
 
-  JAXBContext context;
-  Unmarshaller unmarshaller;
-  XSDCompiler compiler;
-
   @Override
   public void configure(Map<String, ?> settings) {
     this.config = new FromXmlConfig(settings);
-    this.compiler = XSDCompiler.create(this.config);
+    this.compiler = new XSDCompiler(this.config);
 
     try {
       this.context = compiler.compileContext();
@@ -129,13 +135,15 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
     }
   }
 
-  @Title("FromXML(Key)")
-  @Description("This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.")
-  @DocumentationTip("This transformation is used to manipulate fields in the Key of the record.")
+
   public static class Key<R extends ConnectRecord<R>> extends FromXml<R> {
+    public Key() {
+      super(true);
+    }
+
     @Override
     public R apply(R r) {
-      final SchemaAndValue transformed = process(r, r.keySchema(), r.key());
+      final SchemaAndValue transformed = process(r, new SchemaAndValue(r.keySchema(), r.key()));
 
       return r.newRecord(
           r.topic(),
@@ -149,13 +157,14 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseTransforma
     }
   }
 
-  @Title("FromXML(value)")
-  @Description("This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.")
-  @DocumentationTip("This transformation is used to manipulate fields in the Key of the record.")
   public static class Value<R extends ConnectRecord<R>> extends FromXml<R> {
+    public Value() {
+      super(false);
+    }
+
     @Override
     public R apply(R r) {
-      final SchemaAndValue transformed = process(r, r.valueSchema(), r.value());
+      final SchemaAndValue transformed = process(r, new SchemaAndValue(r.valueSchema(), r.value()));
 
       return r.newRecord(
           r.topic(),
