@@ -1,0 +1,19 @@
+{
+  "input": {
+    "topic": "test",
+    "kafkaPartition": 1,
+    "valueSchema": {
+      "type": "STRING",
+      "isOptional": false
+    },
+    "value": "<?xml version=\"1.0\"?>\n<x:books xmlns:x=\"urn:books\">\n    <book id=\"bk001\">\n        <author>Writer</author>\n        <title>The First Book</title>\n        <genre>Fiction</genre>\n        <price>44.95</price>\n        <pub_date>2000-10-01</pub_date>\n        <review>An amazing story of nothing.</review>\n    </book>\n\n    <book id=\"bk002\">\n        <author>Poet</author>\n        <title>The Poet's First Poem</title>\n        <genre>Poem</genre>\n        <price>24.95</price>\n        <pub_date>2000-10-01</pub_date>\n        <review>Least poetic poems.</review>\n    </book>\n</x:books>",
+    "timestampType": "NO_TIMESTAMP_TYPE",
+    "offset": 1574310211719,
+    "headers": []
+  },
+  "name": "Books",
+  "config": {
+    "schema.path": "file:/Users/jeremy/source/opensource/kafka-connect/transforms/kafka-connect-transform-xml/src/test/resources/com/github/jcustenborder/kafka/connect/transform/xml/books.xsd"
+  },
+  "childClass": "Value"
+}
