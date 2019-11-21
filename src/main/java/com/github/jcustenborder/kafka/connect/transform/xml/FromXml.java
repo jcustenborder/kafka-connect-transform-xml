@@ -137,8 +137,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
 
 
   public static class Key<R extends ConnectRecord<R>> extends FromXml<R> {
-
-    protected Key() {
+    public Key() {
       super(true);
     }
 
@@ -159,7 +158,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
   }
 
   public static class Value<R extends ConnectRecord<R>> extends FromXml<R> {
-    protected Value() {
+    public Value() {
       super(false);
     }
 
