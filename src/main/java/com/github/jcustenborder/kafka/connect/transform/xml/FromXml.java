@@ -41,8 +41,12 @@ import java.io.StringReader;
 import java.util.Map;
 
 @Title("FromXML")
-@Description("This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.")
-@DocumentationTip("This transformation is used to manipulate fields in the Key of the record.")
+@Description("This transformation is used to read XML data stored as bytes or a string and convert " +
+    "the XML to a structure that is strongly typed in connect. This allows data to be converted from XML " +
+    "and stored as AVRO in a topic for example. ")
+@DocumentationTip("XML schemas can be much more complex that what can be expressed in a Kafka " +
+    "Connect struct. Elements that can be expressed as an anyType or something similar cannot easily " +
+    "be used to infer type information.")
 public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
   private static final Logger log = LoggerFactory.getLogger(FromXml.class);
   FromXmlConfig config;
