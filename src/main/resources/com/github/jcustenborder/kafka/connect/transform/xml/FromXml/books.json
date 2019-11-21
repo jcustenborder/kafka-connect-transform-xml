@@ -13,7 +13,7 @@
   },
   "name": "Books",
   "config": {
-    "schema.path": "file:/Users/jeremy/source/opensource/kafka-connect/transforms/kafka-connect-transform-xml/src/test/resources/com/github/jcustenborder/kafka/connect/transform/xml/books.xsd"
+    "schema.path": "file:src/test/resources/com/github/jcustenborder/kafka/connect/transform/xml/books.xsd"
   },
   "childClass": "Value"
 }
