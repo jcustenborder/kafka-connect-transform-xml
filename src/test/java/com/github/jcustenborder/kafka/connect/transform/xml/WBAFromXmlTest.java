@@ -19,7 +19,6 @@ import com.google.common.io.Files;
 import org.apache.kafka.connect.connector.ConnectRecord;
 import org.apache.kafka.connect.data.ConnectSchema;
 import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.Assert;
@@ -34,19 +33,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FromXmlTest {
+public class WBAFromXmlTest {
 
-  FromXml.Value transformValue;
-  FromXml.Key transformKey;
+  WBAFromXml.Value transformValue;
+  WBAFromXml.Key transformKey;
 
   @BeforeEach
   public void before() throws MalformedURLException {
     File file = new File("src/test/resources/com/github/jcustenborder/kafka/connect/transform/xml/books.xsd");
-    this.transformValue = new FromXml.Value();
-    this.transformKey = new FromXml.Key();
+    this.transformValue = new WBAFromXml.Value();
+    this.transformKey = new WBAFromXml.Key();
     Map<String,String> testConfigs = new HashMap<>();
-    testConfigs.put(FromXmlConfig.SCHEMA_PATH_CONFIG,file.getAbsoluteFile().toURL().toString());
-    testConfigs.put(FromXmlConfig.REROUTE_ON_FAIL_TOPIC_CONFIG,"DLQTopic");
+    testConfigs.put(WBAFromXmlConfig.SCHEMA_PATH_CONFIG,file.getAbsoluteFile().toURL().toString());
+    testConfigs.put(WBAFromXmlConfig.REROUTE_ON_FAIL_TOPIC_CONFIG,"DLQTopic");
     this.transformValue.configure(testConfigs);
     this.transformKey.configure(testConfigs);
   }

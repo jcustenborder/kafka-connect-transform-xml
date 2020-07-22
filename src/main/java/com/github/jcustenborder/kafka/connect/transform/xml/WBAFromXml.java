@@ -49,21 +49,21 @@ import java.util.Map;
 @DocumentationTip("XML schemas can be much more complex that what can be expressed in a Kafka " +
     "Connect struct. Elements that can be expressed as an anyType or something similar cannot easily " +
     "be used to infer type information.")
-public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
-  private static final Logger log = LoggerFactory.getLogger(FromXml.class);
-  FromXmlConfig config;
+public abstract class WBAFromXml<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
+  private static final Logger log = LoggerFactory.getLogger(WBAFromXml.class);
+  WBAFromXmlConfig config;
   JAXBContext context;
   Unmarshaller unmarshaller;
-  XSDCompiler compiler;
+  WBAXSDCompiler compiler;
   Schema dlqSchema;
 
-  protected FromXml(boolean isKey) {
+  protected WBAFromXml(boolean isKey) {
     super(isKey);
   }
 
   @Override
   public ConfigDef config() {
-    return FromXmlConfig.config();
+    return WBAFromXmlConfig.config();
   }
 
   @Override
@@ -126,8 +126,8 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
 
   @Override
   public void configure(Map<String, ?> settings) {
-    this.config = new FromXmlConfig(settings);
-    this.compiler = new XSDCompiler(this.config);
+    this.config = new WBAFromXmlConfig(settings);
+    this.compiler = new WBAXSDCompiler(this.config);
 
     try {
       this.context = compiler.compileContext();
@@ -152,7 +152,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
   }
 
 
-  public static class Key<R extends ConnectRecord<R>> extends FromXml<R> {
+  public static class Key<R extends ConnectRecord<R>> extends WBAFromXml<R> {
     public Key() {
       super(true);
     }
@@ -194,7 +194,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
     }
   }
 
-  public static class Value<R extends ConnectRecord<R>> extends FromXml<R> {
+  public static class Value<R extends ConnectRecord<R>> extends WBAFromXml<R> {
     public Value() {
       super(false);
     }

@@ -28,7 +28,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
-class FromXmlConfig extends AbstractConfig {
+class WBAFromXmlConfig extends AbstractConfig {
 
   public static final String SCHEMA_PATH_CONFIG = "schema.path";
   public static final String PACKAGE_CONFIG = "package";
@@ -48,7 +48,7 @@ class FromXmlConfig extends AbstractConfig {
   public final boolean optionsStrictCheck;
   public final boolean optionsAutomaticNameConflictResolution;
 
-  public FromXmlConfig(Map<?, ?> originals) {
+  public WBAFromXmlConfig(Map<?, ?> originals) {
     super(config(), originals);
     this.schemaUrls = ConfigUtils.urls(this, SCHEMA_PATH_CONFIG);
     this.xjcPackage = getString(PACKAGE_CONFIG);
@@ -72,7 +72,7 @@ class FromXmlConfig extends AbstractConfig {
             ConfigKeyBuilder.of(PACKAGE_CONFIG, ConfigDef.Type.STRING)
                 .documentation(PACKAGE_DOC)
                 .importance(ConfigDef.Importance.HIGH)
-                .defaultValue(FromXmlConfig.class.getPackage().getName() + ".model")
+                .defaultValue(WBAFromXmlConfig.class.getPackage().getName() + ".model")
                 .build()
         ).define(
             ConfigKeyBuilder.of(XJC_OPTIONS_STRICT_CHECK_CONFIG, ConfigDef.Type.BOOLEAN)
