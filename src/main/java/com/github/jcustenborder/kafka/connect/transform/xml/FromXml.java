@@ -22,7 +22,9 @@ import com.github.jcustenborder.kafka.connect.utils.transformation.BaseKeyValueT
 import com.github.jcustenborder.kafka.connect.xml.Connectable;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
+import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
+import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.DataException;
 import org.slf4j.Logger;
@@ -53,6 +55,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
   JAXBContext context;
   Unmarshaller unmarshaller;
   XSDCompiler compiler;
+  Schema dlqSchema;
 
   protected FromXml(boolean isKey) {
     super(isKey);
@@ -137,6 +140,15 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
     } catch (JAXBException e) {
       throw new IllegalStateException(e);
     }
+
+    if (!config.rerouteTopic.equals("")) {
+      log.debug("Constructing DLQ Schema");
+      dlqSchema = new SchemaBuilder(Schema.Type.STRUCT)
+              .name("com.walgreens.dlq.schema").version(1)
+              .doc("Simple Schema for DLQ Messages from the XML Transform in Kafka Connect")
+              .field("badXML", Schema.STRING_SCHEMA)
+              .build();
+    }
   }
 
 
@@ -147,17 +159,38 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
 
     @Override
     public R apply(R r) {
-      final SchemaAndValue transformed = process(r, new SchemaAndValue(r.keySchema(), r.key()));
 
-      return r.newRecord(
-          r.topic(),
-          r.kafkaPartition(),
-          transformed.schema(),
-          transformed.value(),
-          r.valueSchema(),
-          r.value(),
-          r.timestamp()
-      );
+      try {
+        final SchemaAndValue transformed = process(r, new SchemaAndValue(r.keySchema(), r.key()));
+
+        return r.newRecord(
+                r.topic(),
+                r.kafkaPartition(),
+                transformed.schema(),
+                transformed.value(),
+                r.valueSchema(),
+                r.value(),
+                r.timestamp()
+        );
+
+      } catch (Exception e) {
+        if (!config.rerouteTopic.equals("")) {
+          log.debug("Invalid record, re-routing...");
+          Struct badData = new Struct(dlqSchema).put("badXML", r.key().toString());
+
+          return r.newRecord(
+                  config.rerouteTopic,
+                  r.kafkaPartition(),
+                  dlqSchema,
+                  badData,
+                  r.valueSchema(),
+                  r.value(),
+                  r.timestamp()
+          );
+        } else {
+          throw new DataException("Exception thrown while converting record key", e);
+        }
+      }
     }
   }
 
@@ -168,17 +201,36 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
 
     @Override
     public R apply(R r) {
-      final SchemaAndValue transformed = process(r, new SchemaAndValue(r.valueSchema(), r.value()));
 
-      return r.newRecord(
-          r.topic(),
-          r.kafkaPartition(),
-          r.keySchema(),
-          r.key(),
-          transformed.schema(),
-          transformed.value(),
-          r.timestamp()
-      );
+      try {
+        final SchemaAndValue transformed = process(r, new SchemaAndValue(r.valueSchema(), r.value()));
+
+        return r.newRecord(
+                r.topic(),
+                r.kafkaPartition(),
+                r.keySchema(),
+                r.key(),
+                transformed.schema(),
+                transformed.value(),
+                r.timestamp()
+        );
+      } catch (Exception e) {
+        if (!config.rerouteTopic.equals("")) {
+          log.debug("Invalid record, re-routing...");
+          Struct badData = new Struct(dlqSchema).put("badXML", r.value().toString());
+          return r.newRecord(
+                  config.rerouteTopic,
+                  r.kafkaPartition(),
+                  r.keySchema(),
+                  r.key(),
+                  dlqSchema,
+                  badData,
+                  r.timestamp()
+          );
+        } else {
+          throw new DataException("Exception thrown while converting record value", e);
+        }
+      }
     }
   }
 }
