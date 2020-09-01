@@ -79,7 +79,7 @@
             <artifactId>kafka-connect-xml</artifactId>
             <version>[0.0.1.1, 0.0.1.1000]</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-xjc</artifactId>
             <version>2.3.0</version>
@@ -93,6 +93,21 @@
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-core</artifactId>
             <version>2.3.0</version>
+        </dependency>-->
+        <!-- Adding support for JAXB -->
+        <!-- https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-core -->
+        <!-- API, java.xml.bind module -->
+
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+        <!-- Runtime, com.sun.xml.bind module -->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.1</version>
         </dependency>
     </dependencies>
     <build>
