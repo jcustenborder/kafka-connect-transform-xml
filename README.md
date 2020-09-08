@@ -6,72 +6,67 @@ JAXB source with [XJC](https://docs.oracle.com/javase/8/docs/technotes/tools/uni
 [xjc-kafka-connect-plugin](https://github.com/jcustenborder/xjc-kafka-connect-plugin) loaded. This 
 allows the transformation to efficiently convert XML to structured data for Kafka connect.
 
+Use it in conjunction with a Source connector that reads XML data, such as from a [HTTP REST endpoint](https://www.confluent.io/hub/castorm/kafka-connect-http).
+
 # Transformations
 
 ## FromXML(Key)
 
-This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.
+This transformation is used to transform XML in the Value of the input into a JSON struct based on the provided XSD. 
 
 ### Configuration
 
 | Name         | Type   | Importance | Default Value | Validator | Documentation                                                   |
 | ------------ | ------ | ---------- | ------------- | --------- | --------------------------------------------------------------- |
 | schema.path  | List   | High       |               |           | Urls to the schemas to load. http and https paths are supported |
-
+| xjc.options.automatic.name.conflict.resolution.enabled| Boolean | | False |||
+| xjc.options.strict.check.enabled | Boolean | | True |||
+| xjc.options.verbose.enabled | Boolean | | False |||
 
 #### Standalone Example
 
 ```properties
-transforms=Key
-transforms.Key.type=com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value
+transforms=xml_key
+transforms.xml_key.type=com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Key
 # The following values must be configured.
-transforms.Key.schema.path = < Configure me >
+transforms.xml_key.schema.path = http://web.address/my.xsd
 ```
 
 #### Distributed Example
 
 ```json
-{
-"name": "connector1",
-    "config": {
-        "connector.class": "com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value",
-        "transforms": "Key",
-        "transforms.Key.type": "com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value",
-        "transforms.Key.schema.path": "< Configure me >"
-    }
-}
+"transforms": "xml_key",
+"transforms.xml_key.type": "com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Key",
+"transforms.xml_key.schema.path": "http://web.address/my.xsd"
 ```
 
 ## FromXML(Value)
 
-This transformation is used to rename fields in the key of an input struct based on a regular expression and a replacement string.
+This transformation is used to transform XML in the Value of the input into a JSON struct based on the provided XSD. 
 
 ### Configuration
 
 | Name         | Type   | Importance | Default Value | Validator | Documentation                                                   |
 | ------------ | ------ | ---------- | ------------- | --------- | --------------------------------------------------------------- |
 | schema.path  | List   | High       |               |           | Urls to the schemas to load. http and https paths are supported |
+| xjc.options.automatic.name.conflict.resolution.enabled| Boolean | | False |||
+| xjc.options.strict.check.enabled | Boolean | | True |||
+| xjc.options.verbose.enabled | Boolean | | False |||
 
 
 #### Standalone Example
 
 ```properties
-transforms=Key
-transforms.Key.type=com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value
+transforms=xml_value
+transforms.xml_value.type=com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value
 # The following values must be configured.
-transforms.Key.schema.path = < Configure me >
+transforms.xml_value.schema.path = http://web.address/my.xsd
 ```
 
 #### Distributed Example
 
 ```json
-{
-"name": "connector1",
-    "config": {
-        "connector.class": "com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value",
-        "transforms": "Key",
-        "transforms.Key.type": "com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value",
-        "transforms.Key.schema.path": "< Configure me >"
-    }
-}
+"transforms": "xml_value",
+"transforms.xml_value.type": "com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value",
+"transforms.xml_value.schema.path": "< Configure me >"
 ```
