@@ -49,21 +49,21 @@ import java.util.Map;
 @DocumentationTip("XML schemas can be much more complex that what can be expressed in a Kafka " +
     "Connect struct. Elements that can be expressed as an anyType or something similar cannot easily " +
     "be used to infer type information.")
-public abstract class WBAFromXml<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
-  private static final Logger log = LoggerFactory.getLogger(WBAFromXml.class);
-  WBAFromXmlConfig config;
+public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
+  private static final Logger log = LoggerFactory.getLogger(FromXml.class);
+  FromXmlConfig config;
   JAXBContext context;
   Unmarshaller unmarshaller;
-  WBAXSDCompiler compiler;
+  XSDCompiler compiler;
   Schema dlqSchema;
 
-  protected WBAFromXml(boolean isKey) {
+  protected FromXml(boolean isKey) {
     super(isKey);
   }
 
   @Override
   public ConfigDef config() {
-    return WBAFromXmlConfig.config();
+    return FromXmlConfig.config();
   }
 
   @Override
@@ -126,8 +126,8 @@ public abstract class WBAFromXml<R extends ConnectRecord<R>> extends BaseKeyValu
 
   @Override
   public void configure(Map<String, ?> settings) {
-    this.config = new WBAFromXmlConfig(settings);
-    this.compiler = new WBAXSDCompiler(this.config);
+    this.config = new FromXmlConfig(settings);
+    this.compiler = new XSDCompiler(this.config);
 
     try {
       this.context = compiler.compileContext();
@@ -144,7 +144,7 @@ public abstract class WBAFromXml<R extends ConnectRecord<R>> extends BaseKeyValu
     if (!config.rerouteTopic.equals("")) {
       log.debug("Constructing DLQ Schema");
       dlqSchema = new SchemaBuilder(Schema.Type.STRUCT)
-              .name("com.walgreens.dlq.schema").version(1)
+              .name("com.error.dlq.schema").version(1)
               .doc("Simple Schema for DLQ Messages from the XML Transform in Kafka Connect")
               .field("badXML", Schema.STRING_SCHEMA)
               .build();
@@ -152,7 +152,7 @@ public abstract class WBAFromXml<R extends ConnectRecord<R>> extends BaseKeyValu
   }
 
 
-  public static class Key<R extends ConnectRecord<R>> extends WBAFromXml<R> {
+  public static class Key<R extends ConnectRecord<R>> extends FromXml<R> {
     public Key() {
       super(true);
     }
@@ -194,7 +194,7 @@ public abstract class WBAFromXml<R extends ConnectRecord<R>> extends BaseKeyValu
     }
   }
 
-  public static class Value<R extends ConnectRecord<R>> extends WBAFromXml<R> {
+  public static class Value<R extends ConnectRecord<R>> extends FromXml<R> {
     public Value() {
       super(false);
     }

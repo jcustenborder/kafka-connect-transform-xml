@@ -33,19 +33,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class WBAFromXmlTest {
+public class FromXmlTest {
 
-  WBAFromXml.Value transformValue;
-  WBAFromXml.Key transformKey;
+  FromXml.Value transformValue;
+  FromXml.Key transformKey;
 
   @BeforeEach
   public void before() throws MalformedURLException {
     File file = new File("src/test/resources/com/github/jcustenborder/kafka/connect/transform/xml/books.xsd");
-    this.transformValue = new WBAFromXml.Value();
-    this.transformKey = new WBAFromXml.Key();
+    this.transformValue = new FromXml.Value();
+    this.transformKey = new FromXml.Key();
     Map<String,String> testConfigs = new HashMap<>();
-    testConfigs.put(WBAFromXmlConfig.SCHEMA_PATH_CONFIG,file.getAbsoluteFile().toURL().toString());
-    testConfigs.put(WBAFromXmlConfig.REROUTE_ON_FAIL_TOPIC_CONFIG,"DLQTopic");
+    testConfigs.put(FromXmlConfig.SCHEMA_PATH_CONFIG,file.getAbsoluteFile().toURL().toString());
+    testConfigs.put(FromXmlConfig.REROUTE_ON_FAIL_TOPIC_CONFIG,"DLQTopic");
     this.transformValue.configure(testConfigs);
     this.transformKey.configure(testConfigs);
   }

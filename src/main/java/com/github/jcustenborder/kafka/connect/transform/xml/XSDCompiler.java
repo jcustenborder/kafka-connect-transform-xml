@@ -52,13 +52,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class WBAXSDCompiler implements Closeable {
-  private static final Logger log = LoggerFactory.getLogger(WBAXSDCompiler.class);
+public class XSDCompiler implements Closeable {
+  private static final Logger log = LoggerFactory.getLogger(XSDCompiler.class);
   final File tempDirectory;
   final URLClassLoader classLoader;
-  final WBAFromXmlConfig config;
+  final FromXmlConfig config;
 
-  public WBAXSDCompiler(WBAFromXmlConfig config) {
+  public XSDCompiler(FromXmlConfig config) {
     this.config = config;
     this.tempDirectory = Files.createTempDir();
     try {
