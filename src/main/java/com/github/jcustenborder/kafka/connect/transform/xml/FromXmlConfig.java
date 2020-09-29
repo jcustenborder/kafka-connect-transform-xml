@@ -41,7 +41,7 @@ class FromXmlConfig extends AbstractConfig {
   static final String XJC_OPTIONS_STRICT_CHECK_DOC = "xjc.options.strict.check.enabled";
   static final String XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_DOC = "xjc.options.automatic.name.conflict.resolution.enabled";
   static final String XJC_OPTIONS_VERBOSE_DOC = "xjc.options.verbose.enabled";
-  static final String REROUTE_ON_FAIL_TOPIC_DOC = "When this setting is set, the transform will re-route the record to the specified topic on failure.";
+  static final String REROUTE_ON_FAIL_TOPIC_DOC = "When this setting is set, the transform will re-route the record to the specified topic on transformation failure.";
   public final List<URL> schemaUrls;
   public final String xjcPackage;
   public final String rerouteTopic;

@@ -20,8 +20,9 @@ This transformation is used to transform XML in the Value of the input into a JS
 | ------------ | ------ | ---------- | ------------- | --------- | --------------------------------------------------------------- |
 | schema.path  | List   | High       |               |           | Urls to the schemas to load. http and https paths are supported |
 | xjc.options.automatic.name.conflict.resolution.enabled| Boolean | | False |||
-| xjc.options.strict.check.enabled | Boolean | | True |||
-| xjc.options.verbose.enabled | Boolean | | False |||
+| xjc.options.strict.check.enabled | Boolean | | True | | |
+| xjc.options.verbose.enabled | Boolean | | False | | |
+| reroute.on.fail.topic | String | Medium | Null | | When this setting is set, the transform will re-route the record to the specified topic on transformation failure.|
 
 #### Standalone Example
 
@@ -50,8 +51,9 @@ This transformation is used to transform XML in the Value of the input into a JS
 | ------------ | ------ | ---------- | ------------- | --------- | --------------------------------------------------------------- |
 | schema.path  | List   | High       |               |           | Urls to the schemas to load. http and https paths are supported |
 | xjc.options.automatic.name.conflict.resolution.enabled| Boolean | | False |||
-| xjc.options.strict.check.enabled | Boolean | | True |||
-| xjc.options.verbose.enabled | Boolean | | False |||
+| xjc.options.strict.check.enabled | Boolean | | True | | |
+| xjc.options.verbose.enabled | Boolean | | False | | |
+| reroute.on.fail.topic | String | Medium | Null | | When this setting is set, the transform will re-route the record to the specified topic on transformation failure.|
 
 
 #### Standalone Example
