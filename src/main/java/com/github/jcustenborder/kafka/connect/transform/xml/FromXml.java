@@ -56,6 +56,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
   Unmarshaller unmarshaller;
   XSDCompiler compiler;
   Schema dlqSchema;
+  Boolean dlqEnabled;
 
   protected FromXml(boolean isKey) {
     super(isKey);
@@ -142,7 +143,8 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
     }
 
     if (!config.rerouteTopic.equals("")) {
-      log.debug("Constructing DLQ Schema");
+      log.debug("Enabling topic rerouting and constructing DLQ Schema");
+      dlqEnabled = true;
       dlqSchema = new SchemaBuilder(Schema.Type.STRUCT)
               .name("com.error.dlq.schema").version(1)
               .doc("Simple Schema for DLQ Messages from the XML Transform in Kafka Connect")
@@ -174,7 +176,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
         );
 
       } catch (Exception e) {
-        if (!config.rerouteTopic.equals("")) {
+        if (dlqEnabled) {
           log.debug("Invalid record, re-routing...");
           Struct badData = new Struct(dlqSchema).put("badXML", r.key().toString());
 
@@ -215,7 +217,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
                 r.timestamp()
         );
       } catch (Exception e) {
-        if (!config.rerouteTopic.equals("")) {
+        if (dlqEnabled) {
           log.debug("Invalid record, re-routing...");
           Struct badData = new Struct(dlqSchema).put("badXML", r.value().toString());
           return r.newRecord(
