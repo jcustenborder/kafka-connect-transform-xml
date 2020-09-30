@@ -15,10 +15,13 @@
  */
 package com.github.jcustenborder.kafka.connect.transform.xml;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import org.apache.kafka.connect.connector.ConnectRecord;
+import org.apache.kafka.connect.data.ConnectSchema;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,23 +30,30 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FromXmlTest {
 
-  FromXml.Value transform;
+  FromXml.Value transformValue;
+  FromXml.Key transformKey;
 
   @BeforeEach
   public void before() throws MalformedURLException {
     File file = new File("src/test/resources/com/github/jcustenborder/kafka/connect/transform/xml/books.xsd");
-    this.transform = new FromXml.Value();
-    this.transform.configure(
-        ImmutableMap.of(FromXmlConfig.SCHEMA_PATH_CONFIG, file.getAbsoluteFile().toURL().toString())
-    );
+    this.transformValue = new FromXml.Value();
+    this.transformKey = new FromXml.Key();
+    Map<String,String> testConfigs = new HashMap<>();
+    testConfigs.put(FromXmlConfig.SCHEMA_PATH_CONFIG,file.getAbsoluteFile().toURL().toString());
+    testConfigs.put(FromXmlConfig.REROUTE_ON_FAIL_TOPIC_CONFIG,"DLQTopic");
+    this.transformValue.configure(testConfigs);
+    this.transformKey.configure(testConfigs);
   }
 
   @AfterEach
   public void after() {
-    this.transform.close();
+    this.transformValue.close();
+    this.transformKey.close();
   }
 
   @Test
@@ -52,14 +62,46 @@ public class FromXmlTest {
     final ConnectRecord inputRecord = new SinkRecord(
         "test",
         1,
-        null,
-        null,
-        org.apache.kafka.connect.data.Schema.BYTES_SCHEMA,
+        Schema.BYTES_SCHEMA,
+        input,
+        Schema.BYTES_SCHEMA,
         input,
         new Date().getTime()
     );
 
-    ConnectRecord record = this.transform.apply(inputRecord);
+    ConnectRecord recordValTransform = this.transformValue.apply(inputRecord);
+    Assert.assertEquals(Struct.class,recordValTransform.value().getClass());
+    Assert.assertEquals(ConnectSchema.class,recordValTransform.valueSchema().getClass());
+
+    ConnectRecord recordKeyTransform = this.transformKey.apply(inputRecord);
+    Assert.assertEquals(Struct.class, recordKeyTransform.key().getClass());
+    Assert.assertEquals(ConnectSchema.class, recordKeyTransform.keySchema().getClass());
   }
+
+  @Test
+  public void applyReroute() {
+    final byte[] input = "fakeStructure".getBytes();
+    final ConnectRecord inputRecord = new SinkRecord(
+            "test",
+            1,
+            Schema.BYTES_SCHEMA,
+            input,
+            Schema.BYTES_SCHEMA,
+            input,
+            new Date().getTime()
+    );
+
+    ConnectRecord recordValTransform = this.transformValue.apply(inputRecord);
+    Assert.assertEquals("DLQTopic",recordValTransform.topic());
+    Assert.assertEquals(Struct.class,recordValTransform.value().getClass());
+    Assert.assertEquals(ConnectSchema.class,recordValTransform.valueSchema().getClass());
+
+    ConnectRecord recordKeyTransform = this.transformKey.apply(inputRecord);
+    Assert.assertEquals("DLQTopic",recordKeyTransform.topic());
+    Assert.assertEquals(Struct.class,recordKeyTransform.key().getClass());
+    Assert.assertEquals(ConnectSchema.class,recordKeyTransform.valueSchema().getClass());
+
+  }
+
 
 }

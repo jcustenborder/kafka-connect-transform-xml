@@ -35,13 +35,16 @@ class FromXmlConfig extends AbstractConfig {
   public static final String XJC_OPTIONS_STRICT_CHECK_CONFIG = "xjc.options.strict.check.enabled";
   public static final String XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_CONFIG = "xjc.options.automatic.name.conflict.resolution.enabled";
   public static final String XJC_OPTIONS_VERBOSE_CONFIG = "xjc.options.verbose.enabled";
+  public static final String REROUTE_ON_FAIL_TOPIC_CONFIG = "reroute.on.fail.topic";
   static final String SCHEMA_PATH_DOC = "Urls to the schemas to load. http and https paths are supported";
   static final String PACKAGE_DOC = "The java package xjc will use to generate the source code in. This name will be applied to the resulting schema";
   static final String XJC_OPTIONS_STRICT_CHECK_DOC = "xjc.options.strict.check.enabled";
   static final String XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_DOC = "xjc.options.automatic.name.conflict.resolution.enabled";
   static final String XJC_OPTIONS_VERBOSE_DOC = "xjc.options.verbose.enabled";
+  static final String REROUTE_ON_FAIL_TOPIC_DOC = "When this setting is set, the transform will re-route the record to the specified topic on transformation failure.";
   public final List<URL> schemaUrls;
   public final String xjcPackage;
+  public final String rerouteTopic;
   public final boolean optionsStrictCheck;
   public final boolean optionsAutomaticNameConflictResolution;
 
@@ -50,6 +53,7 @@ class FromXmlConfig extends AbstractConfig {
     this.schemaUrls = ConfigUtils.urls(this, SCHEMA_PATH_CONFIG);
     this.xjcPackage = getString(PACKAGE_CONFIG);
     this.optionsStrictCheck = getBoolean(XJC_OPTIONS_STRICT_CHECK_CONFIG);
+    this.rerouteTopic = getString(REROUTE_ON_FAIL_TOPIC_CONFIG);
     this.optionsAutomaticNameConflictResolution = getBoolean(XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_CONFIG);
   }
 
@@ -88,6 +92,12 @@ class FromXmlConfig extends AbstractConfig {
                 .importance(ConfigDef.Importance.LOW)
                 .defaultValue(options.verbose)
                 .build()
+        ).define(
+            ConfigKeyBuilder.of(REROUTE_ON_FAIL_TOPIC_CONFIG, ConfigDef.Type.STRING)
+                    .documentation(REROUTE_ON_FAIL_TOPIC_DOC)
+                    .importance(ConfigDef.Importance.LOW)
+                    .defaultValue("")
+                    .build()
         );
   }
 
