@@ -72,12 +72,12 @@
         <dependency>
             <groupId>com.github.jcustenborder.kafka.connect</groupId>
             <artifactId>xjc-kafka-connect-plugin</artifactId>
-            <version>[0.0.1.1, 0.0.1.1000]</version>
+            <version>[0.2.0, 0.2.1000]</version>
         </dependency>
         <dependency>
             <groupId>com.github.jcustenborder.kafka.connect</groupId>
             <artifactId>kafka-connect-xml</artifactId>
-            <version>[0.0.1.1, 0.0.1.1000]</version>
+            <version>[0.2.0, 0.2.1000]</version>
         </dependency>
         <dependency>
             <groupId>com.sun.xml.bind</groupId>
