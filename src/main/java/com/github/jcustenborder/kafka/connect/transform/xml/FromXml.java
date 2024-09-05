@@ -20,6 +20,8 @@ import com.github.jcustenborder.kafka.connect.utils.config.DocumentationTip;
 import com.github.jcustenborder.kafka.connect.utils.config.Title;
 import com.github.jcustenborder.kafka.connect.utils.transformation.BaseKeyValueTransformation;
 import com.github.jcustenborder.kafka.connect.xml.Connectable;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.input.BOMInputStream;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
 import org.apache.kafka.connect.data.SchemaAndValue;
@@ -40,6 +42,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
 
+import static org.apache.commons.io.ByteOrderMark.UTF_BOM;
+
 @Title("FromXML")
 @Description("This transformation is used to read XML data stored as bytes or a string and convert " +
     "the XML to a structure that is strongly typed in connect. This allows data to be converted from XML " +
@@ -49,6 +53,9 @@ import java.util.Map;
     "be used to infer type information.")
 public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTransformation<R> {
   private static final Logger log = LoggerFactory.getLogger(FromXml.class);
+
+  private static final ByteOrderMark[] BOMS = {ByteOrderMark.UTF_8, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_32BE, ByteOrderMark.UTF_32LE};
+
   FromXmlConfig config;
   JAXBContext context;
   Unmarshaller unmarshaller;
@@ -74,6 +81,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
 
   @Override
   protected SchemaAndValue processString(R record, org.apache.kafka.connect.data.Schema inputSchema, String input) {
+    input = filterOutUtfBOM(input);
     try (Reader reader = new StringReader(input)) {
       Object element = this.unmarshaller.unmarshal(reader);
       return schemaAndValue(element);
@@ -84,7 +92,10 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
 
   @Override
   protected SchemaAndValue processBytes(R record, org.apache.kafka.connect.data.Schema inputSchema, byte[] input) {
-    try (InputStream inputStream = new ByteArrayInputStream(input)) {
+    try (InputStream inputStream = BOMInputStream.builder()
+            .setByteOrderMarks(BOMS)
+            .setInputStream(new ByteArrayInputStream(input))
+            .get()) {
       try (Reader reader = new InputStreamReader(inputStream)) {
         Object element = this.unmarshaller.unmarshal(reader);
         return schemaAndValue(element);
@@ -144,7 +155,6 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
     public Key() {
       super(true);
     }
-
     @Override
     public R apply(R r) {
       final SchemaAndValue transformed = process(r, new SchemaAndValue(r.keySchema(), r.key()));
@@ -159,13 +169,12 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
           r.timestamp()
       );
     }
-  }
 
+  }
   public static class Value<R extends ConnectRecord<R>> extends FromXml<R> {
     public Value() {
       super(false);
     }
-
     @Override
     public R apply(R r) {
       final SchemaAndValue transformed = process(r, new SchemaAndValue(r.valueSchema(), r.value()));
@@ -180,5 +189,12 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
           r.timestamp()
       );
     }
+
+  }
+  private static String filterOutUtfBOM(String s) {
+    if (s.startsWith(String.valueOf(UTF_BOM))) {
+      s = s.substring(1);
+    }
+    return s;
   }
 }
