@@ -17,7 +17,9 @@ import org.apache.tools.ant.filters.StringInputStream;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.io.IOException;
@@ -49,18 +51,24 @@ public class XSDCompilerTest {
         if (null == model) {
             fail();
         }
-
     }
 
     @Test
     public void testXsdCompiler() throws IOException, JAXBException {
-        final String schemaUrl = "https://sftpgo-dev.s3.eu-central-1.amazonaws.com/pivotal_pos-v2.xsd";
+        String schemaUrl = "https://sftpgo-prod.s3.eu-central-1.amazonaws.com/pivotal_pos.xsd";
+        schemaUrl = "file:///home/sjatep/w/go/src/data-supply/pivotal/docs/pivotal_pos-v2.xsd";
+        schemaUrl = "https://sftpgo-dev.s3.eu-central-1.amazonaws.com/pivotal_pos-v2.xsd";
         File file = new File("/home/sjatep/Downloads/pivotal/PointOfService_ep_de_20240829_011039.xml");
+        file = new File("/home/sjatep/Downloads/pivotal/2.xml");
         Map<String, ?> settings = ImmutableMap.of(FromXmlConfig.SCHEMA_PATH_CONFIG, schemaUrl);
         FromXmlConfig cfg = new FromXmlConfig(settings);
         try (XSDCompiler xsdCompiler = new XSDCompiler(cfg)) {
-            Unmarshaller u = xsdCompiler.compileContext().createUnmarshaller();
+            JAXBContext context = xsdCompiler.compileContext();
+            Unmarshaller u = context.createUnmarshaller();
             Object object = u.unmarshal(file);
+            Marshaller marshaller = context.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.marshal(object, System.out);
             System.out.println(object);
         }
     }
