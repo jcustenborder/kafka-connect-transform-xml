@@ -79,7 +79,7 @@ public class XSDCompilerTest {
         try (FromXml subject = new FromXml.Value<>()) {
             subject.configure(settings);
             ConnectRecord<?> transformed = subject.apply(record);
-            System.out.printf("");
+            System.out.println(transformed.value().toString());
         }
     }
 

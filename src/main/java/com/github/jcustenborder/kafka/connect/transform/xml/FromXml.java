@@ -175,6 +175,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
     public Value() {
       super(false);
     }
+
     @Override
     public R apply(R r) {
       final SchemaAndValue transformed = process(r, new SchemaAndValue(r.valueSchema(), r.value()));
@@ -191,6 +192,7 @@ public abstract class FromXml<R extends ConnectRecord<R>> extends BaseKeyValueTr
     }
 
   }
+
   private static String filterOutUtfBOM(String s) {
     if (s.startsWith(String.valueOf(UTF_BOM))) {
       s = s.substring(1);
