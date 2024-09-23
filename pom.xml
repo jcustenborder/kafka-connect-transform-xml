@@ -137,12 +137,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.xmlbeans</groupId>
-            <artifactId>xmlbeans</artifactId>
-            <version>5.2.1</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.github.jcustenborder.kafka.connect</groupId>
             <artifactId>xjc-kafka-connect-plugin</artifactId>
             <version>[0.2.0, 0.2.1000]</version>
