@@ -1,6 +1,6 @@
 # Inline XSD configuration
 
-Target: `v2.0-SNAPSHOT`.
+Target: `v0.2-SNAPSHOT`.
 
 Add `schema.content`, a string containing one XSD, as an alternative to
 `schema.path`. Exactly one source must be populated; blank content counts as
@@ -16,4 +16,4 @@ Success criteria: key and value transformations accept inline schemas, produce
 the same typed output, enforce XSD constraints, and reject malformed/unsafe
 schemas and conflicting/missing configuration. Existing URL tests continue to
 pass. Document standalone/distributed examples and verify with Java 17 using
-`mvn -B clean verify` before opening the PR against `v2.0-SNAPSHOT`.
+`mvn -B clean verify` before opening the PR against `v0.2-SNAPSHOT`.

@@ -10,7 +10,7 @@ on that root; preserve existing URL graph resolution.
 
 ## Constraints
 
-- Target `v2.0-SNAPSHOT`; exactly one of `schema.path`/`schema.content`.
+- Target `v0.2-SNAPSHOT`; exactly one of `schema.path`/`schema.content`.
 - No new dependencies or temporary schema files.
 - Preserve XML security and existing URL behavior.
 
@@ -30,4 +30,4 @@ on that root; preserve existing URL graph resolution.
 4. Run the focused tests, update README configuration tables and inline examples,
    then run Java 17 `mvn -B clean verify`.
 5. Review the complete diff, commit intended files, push the feature branch,
-   and create a PR with base `v2.0-SNAPSHOT` and verification evidence.
+   and create a PR with base `v0.2-SNAPSHOT` and verification evidence.

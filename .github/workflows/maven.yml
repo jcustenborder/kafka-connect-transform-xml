@@ -2,20 +2,16 @@ name: Maven
 
 on:
   pull_request:
-    branches:
-      - master
-      - v2.0-SNAPSHOT
   push:
     branches:
       - master
-      - v2.0-SNAPSHOT
 
 permissions:
   contents: read
 
 jobs:
   verify:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/v2.0-SNAPSHOT'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

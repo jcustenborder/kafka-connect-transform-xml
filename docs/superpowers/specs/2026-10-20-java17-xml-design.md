@@ -105,5 +105,5 @@ meets the selected arbitrary-XSD interpretation approach.
 6. Inspect the runtime dependency tree and package contents for removal of XJC,
    JAXB model generation, and provided Kafka libraries from plugin bundles.
 
-Implementation PRs target `v2.0-SNAPSHOT`. The baseline report remains a
+Implementation PRs target `v0.2-SNAPSHOT`. The baseline report remains a
 historical record; subsequent verification results are appended separately.
