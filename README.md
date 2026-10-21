@@ -193,8 +193,8 @@ a regular file.
 
 ## GitHub Actions
 
-The Maven workflow verifies PRs targeting `master` or `v0.2-SNAPSHOT`, and pushes
-to `v0.2-SNAPSHOT`, using Temurin 17 and `mvn -B clean verify`.
+The Maven workflow verifies every PR, regardless of its target branch, using
+Temurin 17 and `mvn -B clean verify`.
 Pushes to `master` build and verify a release, then publish its Confluent Hub ZIP
 as a GitHub release. The POM stays at `major.minor-SNAPSHOT`; release versions use
 the next numeric patch tag in that series (for example, `0.2.0`, then `0.2.1`).
