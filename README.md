@@ -155,3 +155,12 @@ also unpacks the plugin ZIP and launches a separate JVM with only `java.base`,
 `java.xml` and `java.logging`, worker-provided Kafka/SLF4J, and the bundled plugin
 dependencies. It verifies key/value conversion and service discovery with compiler
 modules absent and `java.io.tmpdir` pointing to a regular file.
+
+## GitHub Actions
+
+The Maven workflow verifies PRs targeting `master` or `v2.0-SNAPSHOT`, and pushes
+to `v2.0-SNAPSHOT`, using Temurin 17 and `mvn -B clean verify`.
+Pushes to `master` build and verify a release, then publish its Confluent Hub ZIP
+as a GitHub release. The POM stays at `major.minor-SNAPSHOT`; release versions use
+the next numeric patch tag in that series (for example, `2.0.0`, then `2.0.1`).
+Release jobs are serialized to prevent competing patch-version calculations.
