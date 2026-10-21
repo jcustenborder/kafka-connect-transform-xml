@@ -1,0 +1,9 @@
+This fixture contains a modified schema from Apache CXF.
+Apache CXF is a project of the Apache Software Foundation (https://www.apache.org/).
+
+The original schema contains the attribution:
+Created by IONA Artix Designer
+
+The upstream distribution NOTICE contains third-party notices for other schemas,
+libraries and code; those components are not included in this fixture.
+See README.md for the pinned source and NOTICE URLs and the modifications.

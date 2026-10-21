@@ -1,0 +1,46 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements. See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership. The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License. You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied. See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+  -->
+<!-- Modified for kafka-connect-transform-xml: minimized facets.xsd to zipCode
+     and distance; changed distance from integer to int; added a required
+     single-record wrapper and qualified local elements. See README.md. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://soapinterop.org/types"
+           targetNamespace="http://soapinterop.org/types"
+           elementFormDefault="qualified">
+  <xs:simpleType name="zipCode">
+    <xs:restriction base="xs:string">
+      <xs:length value="5"/>
+      <xs:pattern value="\d{5}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="distance">
+    <xs:restriction base="xs:int">
+      <xs:maxInclusive value="100" fixed="true"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="measurement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="myZipCode" type="tns:zipCode"/>
+        <xs:element name="myDistance" type="tns:distance"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

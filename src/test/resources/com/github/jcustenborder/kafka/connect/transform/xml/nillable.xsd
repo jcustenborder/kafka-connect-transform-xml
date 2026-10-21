@@ -1,0 +1,8 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="scalars" type="NillableRecord"/>
+  <xs:complexType name="NillableRecord">
+    <xs:sequence>
+      <xs:element name="text" type="xs:string" minOccurs="0" nillable="true"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

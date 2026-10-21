@@ -1,0 +1,24 @@
+Apache XMLSchema
+This product includes software developed at
+The Apache Software Foundation (https://www.apache.org/).
+
+The following upstream xmlschema-core NOTICE additions are retained:
+
+Portions Copyright 2006 International Business Machines Corp.
+
+Portions Copyright (C) World Wide Web Consortium 2006, 2007 and licensed under the
+three-part BSD license.
+
+The following upstream distribution NOTICE additions are retained:
+
+The w3c-testcases included with this distribution are
+***Copyright (C) World Wide Web Consortium 2006, 2007***
+
+They are made available under the terms of the
+W3C DOCUMENT NOTICE AND LICENSE,
+available online at
+http://www.w3.org/Consortium/Legal/copyright-documents-19990405.html
+
+Local note: this fixture contains only the ASF-header importBase.xsd and
+adaptations of importAux.xsd, not the upstream w3c-testcases collection.
+See README.md for pinned sources and modifications.

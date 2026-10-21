@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Authored for this project; licensed under Apache-2.0. -->
+<root:echoStructParam xmlns:root="http://soapinterop.org/xsd"
+                      xmlns:data="http://soapinterop.org/xsd2"
+                      data:sourceId="sample-001">
+    <data:varString>Hello from the imported type</data:varString>
+</root:echoStructParam>

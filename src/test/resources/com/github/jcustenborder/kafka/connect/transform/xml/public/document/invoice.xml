@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Authored for this project under Apache-2.0; see README.md and repository LICENSE. -->
+<inv:invoice xmlns:inv="http://cxf.apache.org/courseware/Invoice" id="INV-1007">
+  <header>
+    <customer>
+      <firstName>Alice</firstName>
+      <lastName>Martin</lastName>
+      <customerNumber>C-0042</customerNumber>
+    </customer>
+  </header>
+  <invoiceLine warehouse="EAST">
+    <productCode>501</productCode>
+    <description>Notebooks &amp; pads</description>
+    <quantity>3</quantity>
+  </invoiceLine>
+  <invoiceLine warehouse="WEST">
+    <productCode>204</productCode>
+    <description>Blue pens</description>
+    <quantity>12</quantity>
+  </invoiceLine>
+</inv:invoice>
