@@ -52,8 +52,14 @@ meets the selected arbitrary-XSD interpretation approach.
   optionality.
 - Distinguish missing optional values, empty strings, and explicit nil values.
 - Fail during configuration for ambiguous field names, recursive types, mixed
-  content, wildcards, choice groups, and unsupported scalar types. Do not
+  or simple content, wildcards, choice/repeated groups, abstract types/elements,
+  substitution groups, list/union scalars, and unsupported scalar types. Do not
   silently drop constructs that cannot be represented by this mapping.
+- Reject dynamic `xsi:type` at record processing rather than returning a base
+  Struct that discards derived fields. Unbounded/sign-restricted integers retain
+  their legacy INT64 mapping with exact range checks; decimals require an XSD
+  `fractionDigits` scale. Date/time/timestamps use UTC, with no silent loss of
+  sub-millisecond time/timestamp precision.
 - Retain old XJC option names as documented deprecated compatibility settings;
   there is no XJC execution after migration.
 

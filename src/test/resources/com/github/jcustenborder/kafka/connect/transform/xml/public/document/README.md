@@ -57,11 +57,10 @@ names, values, and ordering, and call Kafka Connect's recursive
 `ConnectSchema.validateValue` on the actual output. XML validity alone does not
 satisfy these tests; returning raw XML or JAXB/DOM objects does not satisfy them.
 
-Expectations are hand-derived. These are active replacement-engine contract
-tests. The Java 17 Maven run reaches all six cases, but each errors during
-configuration with the known XJC-engine `HashMap.computeIfAbsent`
-`ConcurrentModificationException`. They therefore do not yet establish conversion
-or missing-description rejection by the transform. Results are recorded in
+Expectations are hand-derived. All six cases pass with the direct XSD mapping
+engine on Java 17, establishing actual Connect conversion and missing-description
+rejection for both input forms. Before the engine replacement, all six errored
+during XJC configuration. Historical and current results are recorded in
 `docs/testing-baseline.md` at the repository root.
 
 Independent Java 17 JAXP validation accepts the sample and rejects the same

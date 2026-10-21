@@ -53,10 +53,11 @@ conversion; it must never be bypassed merely because binding succeeds.
 | `invalid-cardinality.xml` | reject repeated single-valued numeric element |
 
 The invalid conversions must throw Kafka Connect `DataException`. These are
-replacement-engine contract tests. On Java 17 both valid conversion cases pass;
-all twelve invalid-document cases fail because the current JAXB unmarshaller
-accepts the invalid documents without raising `DataException`. They are not
-disabled or relaxed to match silent coercion/defaulting. Independent Java 17
+replacement-engine contract tests. On Java 17 all fourteen cases pass with the
+direct XSD mapping engine, including successful conversion after rejecting a bad
+record. Before migration, both valid conversions passed but all twelve invalid
+cases failed because JAXB accepted invalid documents without `DataException`.
+No assertions were relaxed to match silent coercion/defaulting. Independent Java 17
 JAXP validation accepts the valid fixture and rejects all six invalid fixtures
 without JAXB or added dependencies. Results are recorded in
 `docs/testing-baseline.md` at the repository root.

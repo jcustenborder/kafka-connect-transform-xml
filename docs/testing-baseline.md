@@ -200,3 +200,68 @@ The full Java 17 `mvn clean test` run reports **71 tests: 25 passed, 16 failures
 30 errors, 0 skipped**. No production code or dependencies changed during this
 audit. Namespace/scalar conversion is verified; blocked invoice mapping and
 mandatory XML validation remain explicit implementation work.
+
+## Direct XSD mapping migration: verified
+
+Replaced XJC/JAXB model generation, runtime Java compilation, generated-model
+class loading, and JAXB unmarshalling with XSOM 4.0.9 schema interpretation and
+the JDK's validating XML parser. The original 71-case contract remains active.
+`DirectMappingTest` adds 46 cases, and `CompilerFreeRuntimeIT` adds one packaged
+runtime check.
+
+The added tests were run against the old engine before implementation: they
+exposed missing validation, incorrect UTC dates/defaults, ByteBuffer casting,
+unsafe/unrepresentable schema handling, and missing compiler classes when compiler
+modules were unavailable. Subsequent review regressions reproduced cross-file
+schema-resolution failures, logical-Date overflow, and BCE year errors before
+their fixes. No pre-migration mapping assertions were relaxed or disabled.
+
+Final verification on Temurin 17.0.1 with Maven 3.9.16:
+
+```sh
+JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home mvn clean verify
+```
+
+**BUILD SUCCESS: 117 unit cases plus 1 integration case, 0 failures, 0 errors,
+0 skipped. Checkstyle: 0 violations.** Sources/Javadoc, the plugin JAR,
+Confluent Hub ZIP and tarball packaging complete successfully.
+
+Verified behavior includes:
+
+- STRING/BYTES-to-Struct conversion for both keys and values, including the public
+  invoice fixture that previously failed configuration. ByteBuffer contents are
+  read without changing its position/limit.
+- Mandatory per-document XSD validation and usable conversion after a rejected
+  record. Legacy strict-check settings cannot disable validation.
+- Native Connect logical Date/Time/Timestamp/Decimal, binary fields, widened
+  unsigned values and checked INT64 integer mappings. Logical Date day counts
+  are checked against INT32 storage bounds before encoding. XML Schema 1.0 BCE
+  numbering is translated into ISO numbering for Date and Timestamp.
+- Relative imports/includes, nested chameleon includes, same-namespace cross-file
+  references in both configuration orders, namespace-only imports from explicitly
+  configured schemas, and explicit imports combined with configured namespace
+  siblings. Both XSOM and JAXP consume the complete, cached schema graph.
+- Explicit rejection of unsupported mappings, dynamic `xsi:type`, DTDs/entities,
+  invalid values and schema/value mismatches, rather than discarded data or
+  manufactured defaults.
+
+The integration test unpacks the actual Confluent Hub ZIP. Its child JVM uses
+only bundled plugin dependencies, worker-provided Kafka API/client and SLF4J API
+JARs, and the probe class. It limits modules to `java.base,java.xml,java.logging`,
+checks that both compiler modules are absent, verifies the transform's code source
+is the unpacked plugin JAR, discovers/instantiates both service providers, and
+performs all four key/value × STRING/BYTES conversions into validated Structs.
+`java.io.tmpdir` points to a regular file, preventing temporary-file generation.
+
+Runtime dependency-tree and ZIP/tarball inspection confirm XSOM and its
+relaxng-datatype support are included, XJC/JAXB API/runtime/model-generation JARs
+are absent, and Kafka worker API/client JARs are not bundled. The two service
+provider entries remain in the plugin JAR. Existing warnings in inherited
+documentation/packaging or legacy test dependency repository metadata do not
+prevent verification; no checks were bypassed.
+
+An independent read-only code review identified the schema-composition and Date
+edge cases above. Their regression tests pass, and follow-up review confirmed the
+fixes with no remaining blockers. README documents the supported Connect mapping
+table and explicitly rejected XSD constructs; this is not a claim to map every
+possible XML Schema construct.

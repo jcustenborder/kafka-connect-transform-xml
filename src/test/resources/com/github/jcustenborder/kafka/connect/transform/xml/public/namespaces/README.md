@@ -68,9 +68,9 @@ a concrete Connect Struct and invoke Connect's recursive
 values. Imported types and XML namespaces do not introduce special output types:
 SOAPStruct maps to STRUCT and both fields map to STRING.
 
-All six cases pass against the current XJC engine on Java 17. These are
-characterization tests protecting working schema resolution, namespace handling,
-and output during the engine replacement. Results are recorded in
+All six cases pass with both the pre-migration XJC engine and the direct XSD
+mapping engine on Java 17. These characterization tests protect schema resolution,
+namespace handling, and Connect output across the replacement. Results are recorded in
 `docs/testing-baseline.md` at the repository root.
 
 Independent fixture validation with Eclipse Temurin **17.0.1+12**, using only
