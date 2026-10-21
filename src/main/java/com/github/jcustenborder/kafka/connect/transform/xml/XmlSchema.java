@@ -74,7 +74,7 @@ final class XmlSchema {
   XmlSchema(FromXmlConfig config) {
     prefix = config.schemaPackage;
     try {
-      SchemaSources sources = new SchemaSources(config.schemaUrls);
+      SchemaSources sources = new SchemaSources(config.schemaUrls, config.schemaContent);
       SAXParserFactory sax = SAXParserFactory.newDefaultInstance();
       sax.setNamespaceAware(true);
       sax.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -86,6 +86,9 @@ final class XmlSchema {
       parser.setErrorHandler(new ConnectErrorListener(log));
       for (URL url : config.schemaUrls) {
         parser.parse(sources.source(url));
+      }
+      if (config.schemaUrls.isEmpty()) {
+        parser.parse(sources.inlineSource());
       }
       XSSchemaSet model = parser.getResult();
       if (model == null) {

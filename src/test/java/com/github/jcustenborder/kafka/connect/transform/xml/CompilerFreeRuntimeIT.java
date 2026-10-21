@@ -20,8 +20,9 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.transforms.Transformation;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.io.InputStream;
@@ -45,8 +46,9 @@ public class CompilerFreeRuntimeIT {
   @TempDir
   Path temporary;
 
-  @Test
-  public void packagedPluginConvertsWithoutCompilerModulesOrWritableTemp() throws Exception {
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  public void packagedPluginConvertsWithoutCompilerModulesOrWritableTemp(boolean inline) throws Exception {
     Path bundle = Path.of(System.getProperty("plugin.zip"));
     Path unpacked = temporary.resolve("plugin");
     try (ZipFile zip = new ZipFile(bundle.toFile())) {
@@ -75,7 +77,7 @@ public class CompilerFreeRuntimeIT {
     Process process = new ProcessBuilder(
         Path.of(System.getProperty("java.home"), "bin", "java").toString(),
         "--limit-modules", "java.base,java.xml,java.logging",
-        "-Djava.io.tmpdir=" + noTemp, "-cp", classpath, Probe.class.getName(), jar.toString())
+        "-Djava.io.tmpdir=" + noTemp, "-cp", classpath, Probe.class.getName(), jar.toString(), Boolean.toString(inline))
         .redirectErrorStream(true).redirectOutput(output.toFile()).start();
     if (!process.waitFor(60, TimeUnit.SECONDS)) {
       process.destroyForcibly();
@@ -110,9 +112,13 @@ public class CompilerFreeRuntimeIT {
       }
       Path fixture = Path.of("src/test/resources/com/github/jcustenborder/kafka/connect/transform/xml");
       String xml = Files.readString(fixture.resolve("books.xml"));
+      boolean inline = Boolean.parseBoolean(args[1]);
+      Map<String, String> settings = inline
+          ? Map.of("schema.content", Files.readString(fixture.resolve("books.xsd")))
+          : Map.of("schema.path", fixture.resolve("books.xsd").toUri().toString());
       for (boolean key : List.of(false, true)) {
         try (FromXml<SinkRecord> transform = key ? new FromXml.Key<>() : new FromXml.Value<>()) {
-          transform.configure(Map.of("schema.path", fixture.resolve("books.xsd").toUri().toString()));
+          transform.configure(settings);
           for (boolean bytes : List.of(false, true)) {
             Object input = bytes ? xml.getBytes(StandardCharsets.UTF_8) : xml;
             Schema inputSchema = bytes ? Schema.BYTES_SCHEMA : Schema.STRING_SCHEMA;
