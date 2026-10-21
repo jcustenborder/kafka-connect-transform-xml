@@ -10,7 +10,7 @@
 
 ## Global constraints
 
-- Continue PR #54 against `v2.0-SNAPSHOT`; preserve existing schema names/optionality.
+- Continue PR #54 against `v0.2-SNAPSHOT`; preserve existing schema names/optionality.
 - No compiler API, generated model classes, JAXB unmarshalling, or temp-file requirement.
 - Mandatory per-document validation; DTDs/entities and record-selected external schemas are prohibited.
 - No Eclipse metadata, test exclusions, or masked errors.
@@ -51,4 +51,4 @@ Interfaces:
 - [x] Review implementation and resolve material code-review findings with regression tests.
 
 Delivery target: commit verified changes on the existing branch and update PR #54
-against `v2.0-SNAPSHOT` with the actual verification results.
+against `v0.2-SNAPSHOT` with the actual verification results.
