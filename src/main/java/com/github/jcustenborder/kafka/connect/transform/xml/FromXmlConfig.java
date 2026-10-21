@@ -18,11 +18,9 @@ package com.github.jcustenborder.kafka.connect.transform.xml;
 import com.github.jcustenborder.kafka.connect.utils.config.ConfigKeyBuilder;
 import com.github.jcustenborder.kafka.connect.utils.config.ConfigUtils;
 import com.github.jcustenborder.kafka.connect.utils.config.validators.ValidUrl;
-import com.sun.tools.xjc.Options;
-import com.sun.tools.xjc.api.SchemaCompiler;
-import com.sun.tools.xjc.api.XJC;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigException;
 
 import java.net.URL;
 import java.util.List;
@@ -36,27 +34,23 @@ class FromXmlConfig extends AbstractConfig {
   public static final String XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_CONFIG = "xjc.options.automatic.name.conflict.resolution.enabled";
   public static final String XJC_OPTIONS_VERBOSE_CONFIG = "xjc.options.verbose.enabled";
   static final String SCHEMA_PATH_DOC = "Urls to the schemas to load. http and https paths are supported";
-  static final String PACKAGE_DOC = "The java package xjc will use to generate the source code in. This name will be applied to the resulting schema";
-  static final String XJC_OPTIONS_STRICT_CHECK_DOC = "xjc.options.strict.check.enabled";
-  static final String XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_DOC = "xjc.options.automatic.name.conflict.resolution.enabled";
-  static final String XJC_OPTIONS_VERBOSE_DOC = "xjc.options.verbose.enabled";
+  static final String PACKAGE_DOC = "Name prefix for generated Connect schemas; no Java classes are generated.";
+  static final String XJC_OPTIONS_STRICT_CHECK_DOC = "Deprecated and ignored. Every XML document is validated against its XSD.";
+  static final String XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_DOC = "Deprecated and ignored. Ambiguous Connect field/schema names are rejected.";
+  static final String XJC_OPTIONS_VERBOSE_DOC = "Deprecated and ignored. Logging is controlled by the worker logging configuration.";
   public final List<URL> schemaUrls;
-  public final String xjcPackage;
-  public final boolean optionsStrictCheck;
-  public final boolean optionsAutomaticNameConflictResolution;
+  public final String schemaPackage;
 
   public FromXmlConfig(Map<?, ?> originals) {
     super(config(), originals);
     this.schemaUrls = ConfigUtils.urls(this, SCHEMA_PATH_CONFIG);
-    this.xjcPackage = getString(PACKAGE_CONFIG);
-    this.optionsStrictCheck = getBoolean(XJC_OPTIONS_STRICT_CHECK_CONFIG);
-    this.optionsAutomaticNameConflictResolution = getBoolean(XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_CONFIG);
+    if (this.schemaUrls.isEmpty()) {
+      throw new ConfigException(SCHEMA_PATH_CONFIG, getList(SCHEMA_PATH_CONFIG), "At least one XSD URL is required");
+    }
+    this.schemaPackage = getString(PACKAGE_CONFIG);
   }
 
   public static ConfigDef config() {
-    SchemaCompiler schemaCompiler = XJC.createSchemaCompiler();
-    Options options = schemaCompiler.getOptions();
-
     return new ConfigDef()
         .define(
             ConfigKeyBuilder.of(SCHEMA_PATH_CONFIG, ConfigDef.Type.LIST)
@@ -68,25 +62,26 @@ class FromXmlConfig extends AbstractConfig {
             ConfigKeyBuilder.of(PACKAGE_CONFIG, ConfigDef.Type.STRING)
                 .documentation(PACKAGE_DOC)
                 .importance(ConfigDef.Importance.HIGH)
+                .validator(new ConfigDef.NonEmptyString())
                 .defaultValue(FromXmlConfig.class.getPackage().getName() + ".model")
                 .build()
         ).define(
             ConfigKeyBuilder.of(XJC_OPTIONS_STRICT_CHECK_CONFIG, ConfigDef.Type.BOOLEAN)
                 .documentation(XJC_OPTIONS_STRICT_CHECK_DOC)
                 .importance(ConfigDef.Importance.LOW)
-                .defaultValue(options.strictCheck)
+                .defaultValue(true)
                 .build()
         ).define(
             ConfigKeyBuilder.of(XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_CONFIG, ConfigDef.Type.BOOLEAN)
                 .documentation(XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_DOC)
                 .importance(ConfigDef.Importance.LOW)
-                .defaultValue(options.automaticNameConflictResolution)
+                .defaultValue(false)
                 .build()
         ).define(
             ConfigKeyBuilder.of(XJC_OPTIONS_VERBOSE_CONFIG, ConfigDef.Type.BOOLEAN)
                 .documentation(XJC_OPTIONS_VERBOSE_DOC)
                 .importance(ConfigDef.Importance.LOW)
-                .defaultValue(options.verbose)
+                .defaultValue(false)
                 .build()
         );
   }

@@ -14,3 +14,7 @@ target
 .okhttpcache
 *.iml
 .idea
+.classpath
+.factorypath
+.project
+.settings/

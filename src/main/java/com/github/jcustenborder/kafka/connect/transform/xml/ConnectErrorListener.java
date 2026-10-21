@@ -15,11 +15,11 @@
  */
 package com.github.jcustenborder.kafka.connect.transform.xml;
 
-import com.sun.tools.xjc.api.ErrorListener;
 import org.slf4j.Logger;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 
-class ConnectErrorListener implements ErrorListener {
+class ConnectErrorListener implements ErrorHandler {
   final Logger log;
 
   ConnectErrorListener(Logger log) {
@@ -27,13 +27,15 @@ class ConnectErrorListener implements ErrorListener {
   }
 
   @Override
-  public void error(SAXParseException e) {
-    log.error("Error", e);
+  public void error(SAXParseException e) throws SAXParseException {
+    log.debug("XML validation failed", e);
+    throw e;
   }
 
   @Override
-  public void fatalError(SAXParseException e) {
-    log.error("fatalError", e);
+  public void fatalError(SAXParseException e) throws SAXParseException {
+    log.debug("XML parsing failed", e);
+    throw e;
   }
 
   @Override
@@ -41,8 +43,4 @@ class ConnectErrorListener implements ErrorListener {
     log.warn("warning", e);
   }
 
-  @Override
-  public void info(SAXParseException e) {
-    log.info("info", e);
-  }
 }

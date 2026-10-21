@@ -1,0 +1,4 @@
+<measurement xmlns="http://soapinterop.org/types">
+  <myZipCode>ABCDE</myZipCode>
+  <myDistance>42</myDistance>
+</measurement>
