@@ -88,11 +88,15 @@ final class SchemaSources implements EntityResolver, LSResourceResolver {
         throw new ConfigException("Unsupported schema URL protocol: " + url);
       }
       log.debug("Loading XSD {}", url);
-      URLConnection connection = url.openConnection();
-      connection.setConnectTimeout(30000);
-      connection.setReadTimeout(30000);
-      try (InputStream input = connection.getInputStream()) {
-        bytes = input.readAllBytes();
+      try {
+        URLConnection connection = url.openConnection();
+        connection.setConnectTimeout(30000);
+        connection.setReadTimeout(30000);
+        try (InputStream input = connection.getInputStream()) {
+          bytes = input.readAllBytes();
+        }
+      } catch (IOException e) {
+        throw new IOException("Cannot load XSD " + url + ": " + e.getMessage(), e);
       }
       Element schema = metadata.parse(input(systemId, bytes)).getDocumentElement();
       if (!XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(schema.getNamespaceURI())
@@ -155,7 +159,6 @@ final class SchemaSources implements EntityResolver, LSResourceResolver {
     for (Map.Entry<String, List<String>> group : groups.entrySet()) {
       String id = umbrellas.computeIfAbsent(group.getKey(), ignored -> "urn:kafka-connect-xml:namespace:" + umbrellas.size());
       documents.put(id, umbrella(group.getKey(), group.getValue()));
-      namespaces.put(id, group.getKey());
     }
   }
 

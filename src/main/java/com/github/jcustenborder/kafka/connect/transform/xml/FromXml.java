@@ -74,33 +74,31 @@ public abstract class FromXml<R extends ConnectRecord<R>> implements Transformat
       throw new IllegalStateException("The XML transform is not configured or has been closed");
     }
     Object input = isKey ? record.key() : record.value();
-    Schema inputSchema = isKey ? record.keySchema() : record.valueSchema();
-    final SchemaAndValue output;
     if (input == null) {
-      output = new SchemaAndValue(inputSchema, null);
-    } else {
-      if (inputSchema != null && inputSchema.type() != Schema.Type.STRING
-          && inputSchema.type() != Schema.Type.BYTES) {
-        throw new DataException("Expected a STRING or BYTES input schema, got " + inputSchema.type());
-      }
-      if (inputSchema != null) {
-        ConnectSchema.validateValue(inputSchema, input);
-      }
-      final InputSource source;
-      if (input instanceof String) {
-        source = new InputSource(new StringReader((String) input));
-      } else if (input instanceof byte[]) {
-        source = new InputSource(new ByteArrayInputStream((byte[]) input));
-      } else if (input instanceof ByteBuffer) {
-        ByteBuffer buffer = ((ByteBuffer) input).duplicate();
-        byte[] bytes = new byte[buffer.remaining()];
-        buffer.get(bytes);
-        source = new InputSource(new ByteArrayInputStream(bytes));
-      } else {
-        throw new DataException("Expected STRING or BYTES XML input, got " + input.getClass().getName());
-      }
-      output = mapping.read(source);
+      return record;
     }
+    Schema inputSchema = isKey ? record.keySchema() : record.valueSchema();
+    if (inputSchema != null && inputSchema.type() != Schema.Type.STRING
+        && inputSchema.type() != Schema.Type.BYTES) {
+      throw new DataException("Expected a STRING or BYTES input schema, got " + inputSchema.type());
+    }
+    if (inputSchema != null) {
+      ConnectSchema.validateValue(inputSchema, input);
+    }
+    final InputSource source;
+    if (input instanceof String) {
+      source = new InputSource(new StringReader((String) input));
+    } else if (input instanceof byte[]) {
+      source = new InputSource(new ByteArrayInputStream((byte[]) input));
+    } else if (input instanceof ByteBuffer) {
+      ByteBuffer buffer = ((ByteBuffer) input).duplicate();
+      byte[] bytes = new byte[buffer.remaining()];
+      buffer.get(bytes);
+      source = new InputSource(new ByteArrayInputStream(bytes));
+    } else {
+      throw new DataException("Expected STRING or BYTES XML input, got " + input.getClass().getName());
+    }
+    SchemaAndValue output = mapping.read(source);
     return record.newRecord(record.topic(), record.kafkaPartition(),
         isKey ? output.schema() : record.keySchema(), isKey ? output.value() : record.key(),
         isKey ? record.valueSchema() : output.schema(), isKey ? record.value() : output.value(),

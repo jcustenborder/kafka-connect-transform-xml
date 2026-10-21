@@ -33,6 +33,7 @@ import org.apache.kafka.connect.data.Decimal;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,7 +141,9 @@ final class XmlSchema {
       Object value = type.read(root);
       ConnectSchema.validateValue(type.schema, value);
       return new SchemaAndValue(type.schema, value);
-    } catch (SAXException | IOException | ParserConfigurationException e) {
+    } catch (ParserConfigurationException e) {
+      throw new ConnectException("Cannot initialize XML document parser", e);
+    } catch (SAXException | IOException e) {
       throw new DataException("XML document does not match its configured XSD: " + e.getMessage(), e);
     }
   }
@@ -243,33 +246,26 @@ final class XmlSchema {
         scalar = "string";
         break;
       case "boolean":
-        builder = SchemaBuilder.bool();
-        optional = true;
+        builder = SchemaBuilder.bool().optional();
         break;
       case "byte":
-        builder = SchemaBuilder.int8();
-        optional = true;
+        builder = SchemaBuilder.int8().optional();
         break;
       case "short", "unsignedByte":
-        builder = SchemaBuilder.int16();
-        optional = true;
+        builder = SchemaBuilder.int16().optional();
         break;
       case "int", "unsignedShort":
-        builder = SchemaBuilder.int32();
-        optional = true;
+        builder = SchemaBuilder.int32().optional();
         break;
       case "long", "unsignedInt", "unsignedLong", "integer", "positiveInteger",
            "nonNegativeInteger", "nonPositiveInteger", "negativeInteger":
-        builder = SchemaBuilder.int64();
-        optional = true;
+        builder = SchemaBuilder.int64().optional();
         break;
       case "float":
-        builder = SchemaBuilder.float32();
-        optional = true;
+        builder = SchemaBuilder.float32().optional();
         break;
       case "double":
-        builder = SchemaBuilder.float64();
-        optional = true;
+        builder = SchemaBuilder.float64().optional();
         break;
       case "decimal":
         XSFacet scale = type.getFacet(XSFacet.FACET_FRACTIONDIGITS);

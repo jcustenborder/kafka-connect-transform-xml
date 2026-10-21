@@ -265,3 +265,26 @@ edge cases above. Their regression tests pass, and follow-up review confirmed th
 fixes with no remaining blockers. README documents the supported Connect mapping
 table and explicitly rejected XSD constructs; this is not a claim to map every
 possible XML Schema construct.
+
+## Ponytail and exception-handling review follow-up
+
+Applied the reviewed simplifications: null selected-side inputs return the
+original record, primitive optional schemas use the native builder directly, and
+unused virtual-document namespace writes are removed. All schema composition,
+mapping and validation assertions remain active.
+
+Schema fetch I/O failures now identify the failing XSD URL while preserving the
+original exception. Both connection-opening and stream-reading failures are
+covered without network access, and a missing-file test verifies the public
+configuration exception retains the URL and full cause chain.
+
+Parser-configuration failures now raise an operational `ConnectException` with
+their cause; malformed/invalid XML remains a `DataException`. A focused test uses
+the existing Mockito dependency to simulate the otherwise unavailable JDK parser
+setup failure, without adding a production test hook or shared parser factory.
+No additional per-record error logging or dependencies were introduced.
+
+The targeted regression run first reported 8 failures across 10 cases, then all
+10 passed after the fixes. Final Java 17 `mvn clean verify`: **121 unit cases plus
+1 packaged-runtime integration case passed, 0 failures/errors/skipped, 0 Checkstyle
+violations**. The compiler-free, non-writable-temp plugin ZIP check still passes.

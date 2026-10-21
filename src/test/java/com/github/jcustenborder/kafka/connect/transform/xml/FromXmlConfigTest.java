@@ -17,10 +17,16 @@ package com.github.jcustenborder.kafka.connect.transform.xml;
 
 import org.apache.kafka.common.config.ConfigException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FromXmlConfigTest {
   @Test
@@ -32,5 +38,15 @@ public class FromXmlConfigTest {
   public void rejectsMalformedSchemaUrl() {
     assertThrows(ConfigException.class, () -> new FromXmlConfig(Collections.singletonMap(
         FromXmlConfig.SCHEMA_PATH_CONFIG, "not a URL")));
+  }
+
+  @Test
+  public void configurationFailureIdentifiesMissingSchemaAndPreservesCause(@TempDir Path directory) throws IOException {
+    String url = directory.resolve("missing.xsd").toUri().toURL().toExternalForm();
+    ConfigException error = assertThrows(ConfigException.class, () ->
+        new FromXml.Value<>().configure(Collections.singletonMap(FromXmlConfig.SCHEMA_PATH_CONFIG, url)));
+    assertTrue(error.getMessage().contains(url), error.getMessage());
+    IOException fetch = assertInstanceOf(IOException.class, error.getCause());
+    assertInstanceOf(FileNotFoundException.class, fetch.getCause());
   }
 }

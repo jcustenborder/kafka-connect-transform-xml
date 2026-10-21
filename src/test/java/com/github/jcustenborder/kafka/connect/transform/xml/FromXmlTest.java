@@ -108,6 +108,7 @@ public class FromXmlTest {
     Schema schema = schemaful ? Schema.OPTIONAL_STRING_SCHEMA : null;
     SinkRecord original = record(key, schema, null);
     SinkRecord result = transform.apply(original);
+    assertSame(original, result, "A null selected side should pass through without copying the record");
     assertNull(key ? result.key() : result.value());
     assertEquals(schema, key ? result.keySchema() : result.valueSchema());
     assertSame(key ? original.value() : original.key(), key ? result.value() : result.key());
