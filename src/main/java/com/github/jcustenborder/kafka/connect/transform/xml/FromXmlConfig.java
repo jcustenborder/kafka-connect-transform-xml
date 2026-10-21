@@ -29,17 +29,22 @@ import java.util.Map;
 class FromXmlConfig extends AbstractConfig {
 
   public static final String SCHEMA_PATH_CONFIG = "schema.path";
+  public static final String SCHEMA_CONTENT_CONFIG = "schema.content";
   public static final String PACKAGE_CONFIG = "package";
-  static final String SCHEMA_PATH_DOC = "Urls to the schemas to load. http and https paths are supported";
+  static final String SCHEMA_PATH_DOC = "URLs to the schemas to load (file, http, https). Configure exactly one of schema.path or schema.content.";
+  static final String SCHEMA_CONTENT_DOC = "Inline XSD document. Configure exactly one of schema.path or schema.content. "
+      + "Imports/includes must use absolute URLs because inline content has no base URL.";
   static final String PACKAGE_DOC = "Name prefix for generated Connect schemas; no Java classes are generated.";
   public final List<URL> schemaUrls;
+  public final String schemaContent;
   public final String schemaPackage;
 
   public FromXmlConfig(Map<?, ?> originals) {
     super(config(), originals);
     this.schemaUrls = ConfigUtils.urls(this, SCHEMA_PATH_CONFIG);
-    if (this.schemaUrls.isEmpty()) {
-      throw new ConfigException(SCHEMA_PATH_CONFIG, getList(SCHEMA_PATH_CONFIG), "At least one XSD URL is required");
+    this.schemaContent = getString(SCHEMA_CONTENT_CONFIG);
+    if (this.schemaUrls.isEmpty() == (this.schemaContent == null || this.schemaContent.isBlank())) {
+      throw new ConfigException("Exactly one of schema.path or schema.content must be configured");
     }
     this.schemaPackage = getString(PACKAGE_CONFIG);
   }
@@ -51,6 +56,13 @@ class FromXmlConfig extends AbstractConfig {
                 .documentation(SCHEMA_PATH_DOC)
                 .importance(ConfigDef.Importance.HIGH)
                 .validator(new ValidUrl())
+                .defaultValue(List.of())
+                .build()
+        ).define(
+            ConfigKeyBuilder.of(SCHEMA_CONTENT_CONFIG, ConfigDef.Type.STRING)
+                .documentation(SCHEMA_CONTENT_DOC)
+                .importance(ConfigDef.Importance.HIGH)
+                .defaultValue("")
                 .build()
         ).define(
             ConfigKeyBuilder.of(PACKAGE_CONFIG, ConfigDef.Type.STRING)

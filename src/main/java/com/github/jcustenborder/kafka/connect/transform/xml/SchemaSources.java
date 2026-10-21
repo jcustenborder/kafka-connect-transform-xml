@@ -41,9 +41,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -55,6 +57,7 @@ import java.util.Set;
 /** Configuration-time schema cache shared by XSOM and JAXP. */
 final class SchemaSources implements EntityResolver, LSResourceResolver {
   private static final Logger log = LoggerFactory.getLogger(SchemaSources.class);
+  private static final String INLINE_SYSTEM_ID = "urn:kafka-connect-xml:inline";
   private final Map<String, byte[]> documents = new HashMap<>();
   private final Map<String, String> namespaces = new HashMap<>();
   private final Map<String, Set<String>> imports = new HashMap<>();
@@ -63,6 +66,10 @@ final class SchemaSources implements EntityResolver, LSResourceResolver {
   private final DOMImplementationLS dom;
 
   SchemaSources(List<URL> roots) throws ParserConfigurationException, IOException, SAXException {
+    this(roots, "");
+  }
+
+  SchemaSources(List<URL> roots, String content) throws ParserConfigurationException, IOException, SAXException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
     factory.setNamespaceAware(true);
     factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -77,7 +84,15 @@ final class SchemaSources implements EntityResolver, LSResourceResolver {
       String id = source(root).getSystemId();
       groups.computeIfAbsent(namespaces.get(id), ignored -> new ArrayList<>()).add(id);
     }
+    if (content != null && !content.isBlank()) {
+      cache(INLINE_SYSTEM_ID, content.getBytes(StandardCharsets.UTF_8));
+      groups.computeIfAbsent(namespaces.get(INLINE_SYSTEM_ID), ignored -> new ArrayList<>()).add(INLINE_SYSTEM_ID);
+    }
     compose(groups);
+  }
+
+  InputSource inlineSource() {
+    return input(INLINE_SYSTEM_ID, documents.get(INLINE_SYSTEM_ID));
   }
 
   InputSource source(URL url) throws IOException, SAXException {
@@ -98,27 +113,41 @@ final class SchemaSources implements EntityResolver, LSResourceResolver {
       } catch (IOException e) {
         throw new IOException("Cannot load XSD " + url + ": " + e.getMessage(), e);
       }
-      Element schema = metadata.parse(input(systemId, bytes)).getDocumentElement();
-      if (!XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(schema.getNamespaceURI())
-          || !"schema".equals(schema.getLocalName())) {
-        throw new ConfigException("Expected an XSD schema document at " + systemId);
-      }
-      namespaces.put(systemId, schema.getAttribute("targetNamespace"));
-      Set<String> importedNamespaces = new HashSet<>();
-      for (Node child = schema.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof Element && XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(child.getNamespaceURI())
-            && "import".equals(child.getLocalName())) {
-          importedNamespaces.add(((Element) child).getAttribute("namespace"));
-        }
-      }
-      imports.put(systemId, importedNamespaces);
-      documents.put(systemId, bytes);
+      cache(systemId, bytes);
     }
     return input(systemId, bytes);
   }
 
+  private void cache(String systemId, byte[] bytes) throws IOException, SAXException {
+    Element schema = metadata.parse(input(systemId, bytes)).getDocumentElement();
+    if (!XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(schema.getNamespaceURI())
+        || !"schema".equals(schema.getLocalName())) {
+      throw new ConfigException("Expected an XSD schema document at " + systemId);
+    }
+    namespaces.put(systemId, schema.getAttribute("targetNamespace"));
+    Set<String> importedNamespaces = new HashSet<>();
+    for (Node child = schema.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (INLINE_SYSTEM_ID.equals(systemId) && child instanceof Element
+          && XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(child.getNamespaceURI())
+          && Set.of("import", "include", "redefine").contains(child.getLocalName())) {
+        String location = ((Element) child).getAttribute("schemaLocation");
+        if (!location.isEmpty() && !URI.create(location).isAbsolute()) {
+          throw new ConfigException("schema.content requires absolute schemaLocation URLs; no base URL for: " + location);
+        }
+      }
+      if (child instanceof Element && XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(child.getNamespaceURI())
+          && "import".equals(child.getLocalName())) {
+        importedNamespaces.add(((Element) child).getAttribute("namespace"));
+      }
+    }
+    imports.put(systemId, importedNamespaces);
+    documents.put(systemId, bytes);
+  }
+
   private static InputSource input(String systemId, byte[] bytes) {
-    InputSource input = new InputSource(new ByteArrayInputStream(bytes));
+    InputSource input = INLINE_SYSTEM_ID.equals(systemId)
+        ? new InputSource(new StringReader(new String(bytes, StandardCharsets.UTF_8)))
+        : new InputSource(new ByteArrayInputStream(bytes));
     input.setSystemId(systemId);
     return input;
   }
@@ -169,6 +198,8 @@ final class SchemaSources implements EntityResolver, LSResourceResolver {
       String id;
       if (umbrellas.containsKey(namespaceKey) && imports.getOrDefault(baseUri, Set.of()).contains(namespaceKey)) {
         id = umbrellas.get(namespaceKey);
+      } else if (documents.containsKey(systemId)) {
+        id = systemId;
       } else {
         if (systemId == null || baseUri == null) {
           throw new ConfigException("Schema import has no configured XSD or schemaLocation: " + namespace);
@@ -183,7 +214,9 @@ final class SchemaSources implements EntityResolver, LSResourceResolver {
       input.setSystemId(id);
       input.setPublicId(publicId);
       input.setBaseURI(baseUri);
-      input.setByteStream(new ByteArrayInputStream(bytes));
+      InputSource source = input(id, bytes);
+      input.setByteStream(source.getByteStream());
+      input.setCharacterStream(source.getCharacterStream());
       return input;
     } catch (IOException e) {
       ConfigException error = new ConfigException("Invalid schema location: " + systemId);

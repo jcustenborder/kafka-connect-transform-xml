@@ -25,7 +25,8 @@ Converts XML in the record key into a typed Connect Struct based on the configur
 
 | Name         | Type   | Importance | Default Value | Validator | Documentation                                                   |
 | ------------ | ------ | ---------- | ------------- | --------- | --------------------------------------------------------------- |
-| schema.path  | List   | High       |               |           | Urls to the schemas to load. http and https paths are supported |
+| schema.path  | List   | High       | Empty list    | Valid URLs | XSD URLs (file, http, https); use exactly one of schema.path or schema.content |
+| schema.content | String | High | Empty string | | Inline XSD document; use exactly one of schema.path or schema.content |
 | package | String | High | com.github.jcustenborder.kafka.connect.transform.xml.model | Non-empty | Connect schema-name prefix; no Java package is compiled |
 
 #### Standalone Example
@@ -45,6 +46,19 @@ transforms.xml_key.schema.path = http://web.address/my.xsd
 "transforms.xml_key.schema.path": "http://web.address/my.xsd"
 ```
 
+#### Inline Schema Example
+
+Set the XSD directly in the connector configuration when a schema file or URL
+is unavailable. Omit `schema.path` when using `schema.content`.
+
+```json
+{
+  "transforms": "xml_key",
+  "transforms.xml_key.type": "com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Key",
+  "transforms.xml_key.schema.content": "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'><xs:element name='message'><xs:complexType><xs:sequence><xs:element name='text' type='xs:string'/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+}
+```
+
 ## FromXML(Value)
 
 Converts XML in the record value into a typed Connect Struct based on the configured XSD.
@@ -53,7 +67,8 @@ Converts XML in the record value into a typed Connect Struct based on the config
 
 | Name         | Type   | Importance | Default Value | Validator | Documentation                                                   |
 | ------------ | ------ | ---------- | ------------- | --------- | --------------------------------------------------------------- |
-| schema.path  | List   | High       |               |           | Urls to the schemas to load. http and https paths are supported |
+| schema.path  | List   | High       | Empty list    | Valid URLs | XSD URLs (file, http, https); use exactly one of schema.path or schema.content |
+| schema.content | String | High | Empty string | | Inline XSD document; use exactly one of schema.path or schema.content |
 | package | String | High | com.github.jcustenborder.kafka.connect.transform.xml.model | Non-empty | Connect schema-name prefix; no Java package is compiled |
 
 
@@ -74,6 +89,30 @@ transforms.xml_value.schema.path = http://web.address/my.xsd
 "transforms.xml_value.schema.path": "< Configure me >"
 ```
 
+#### Inline Schema Example
+
+```json
+{
+  "transforms": "xml_value",
+  "transforms.xml_value.type": "com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value",
+  "transforms.xml_value.schema.content": "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'><xs:element name='message'><xs:complexType><xs:sequence><xs:element name='text' type='xs:string'/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+}
+```
+
+The same inline schema can be supplied in a standalone `.properties` file:
+
+```properties
+transforms=xml_value
+transforms.xml_value.type=com.github.jcustenborder.kafka.connect.transform.xml.FromXml$Value
+transforms.xml_value.schema.content=<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'><xs:element name='message'><xs:complexType><xs:sequence><xs:element name='text' type='xs:string'/></xs:sequence></xs:complexType></xs:element></xs:schema>
+```
+
+For these examples, `<message><text>Hello</text></message>` becomes a Struct
+with a `text` string field. Exactly one of `schema.path` or `schema.content` must
+be populated; configuring both or neither fails during configuration.
+Whitespace-only `schema.content` is treated as absent. In JSON, escape embedded
+double quotes and newlines as `\"` and `\n` respectively.
+
 ## XSD to Connect mapping
 
 The document root must have a complex type so the result is a Connect Struct.
@@ -85,6 +124,13 @@ imports/includes are resolved at configuration time. Multiple configured schemas
 can contribute cross-referenced declarations to the same namespace in either
 configuration order. An import without `schemaLocation` is resolved from the
 explicitly configured XSD for that namespace; it cannot trigger an implicit fetch.
+
+`schema.content` supplies one XSD directly as a string and is parsed entirely in
+memory, without reading or writing a schema file. Inline imports/includes must
+use absolute `file:`, `http:`, or `https:` URLs; relative `schemaLocation` values
+are rejected because inline content has no base URL. For filesystem-free
+environments, use a self-contained XSD or absolute HTTP/HTTPS references. Schemas
+loaded through those URLs can still resolve their own relative imports/includes.
 
 | XSD type | Connect type / Java value |
 | --- | --- |
@@ -141,8 +187,9 @@ The tests assert STRING/BYTES-to-Struct values and native Connect schemas,
 including public Apache-derived fixtures with source/license attribution. Failsafe
 also unpacks the plugin ZIP and launches a separate JVM with only `java.base`,
 `java.xml` and `java.logging`, worker-provided Kafka/SLF4J, and the bundled plugin
-dependencies. It verifies key/value conversion and service discovery with compiler
-modules absent and `java.io.tmpdir` pointing to a regular file.
+dependencies. It verifies key/value conversion using URL and inline schemas, and
+service discovery with compiler modules absent and `java.io.tmpdir` pointing to
+a regular file.
 
 ## GitHub Actions
 

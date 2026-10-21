@@ -109,7 +109,11 @@ public abstract class FromXml<R extends ConnectRecord<R>> implements Transformat
   public void configure(Map<String, ?> settings) {
     FromXmlConfig config = new FromXmlConfig(settings);
     this.mapping = new XmlSchema(config);
-    log.info("Configured XML-to-Struct mapping from {} XSD URL(s)", config.schemaUrls.size());
+    if (config.schemaUrls.isEmpty()) {
+      log.info("Configured XML-to-Struct mapping from inline schema.content");
+    } else {
+      log.info("Configured XML-to-Struct mapping from {} XSD URL(s)", config.schemaUrls.size());
+    }
   }
 
 
