@@ -308,11 +308,11 @@ public class DirectMappingTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
-  public void legacyStrictCheckCannotDisableDocumentValidation(boolean bytes) throws IOException {
+  public void validatesEveryDocument(boolean bytes) throws IOException {
     configure(schema("<xs:element name='record'><xs:complexType><xs:sequence>"
         + "<xs:element name='number' type='xs:int'/></xs:sequence>"
         + "<xs:attribute name='id' type='xs:string' use='required'/></xs:complexType></xs:element>"),
-        Map.of(FromXmlConfig.XJC_OPTIONS_STRICT_CHECK_CONFIG, false));
+        Map.of());
     assertThrows(DataException.class, () -> apply("<record id='1'/>", bytes));
     assertThrows(DataException.class, () -> apply("<record><number>1</number></record>", bytes));
     assertThrows(DataException.class, () -> apply("<record id='1'><number>1</number><extra/></record>", bytes));

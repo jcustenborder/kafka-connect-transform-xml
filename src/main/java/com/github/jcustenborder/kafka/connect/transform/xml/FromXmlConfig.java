@@ -30,14 +30,8 @@ class FromXmlConfig extends AbstractConfig {
 
   public static final String SCHEMA_PATH_CONFIG = "schema.path";
   public static final String PACKAGE_CONFIG = "package";
-  public static final String XJC_OPTIONS_STRICT_CHECK_CONFIG = "xjc.options.strict.check.enabled";
-  public static final String XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_CONFIG = "xjc.options.automatic.name.conflict.resolution.enabled";
-  public static final String XJC_OPTIONS_VERBOSE_CONFIG = "xjc.options.verbose.enabled";
   static final String SCHEMA_PATH_DOC = "Urls to the schemas to load. http and https paths are supported";
   static final String PACKAGE_DOC = "Name prefix for generated Connect schemas; no Java classes are generated.";
-  static final String XJC_OPTIONS_STRICT_CHECK_DOC = "Deprecated and ignored. Every XML document is validated against its XSD.";
-  static final String XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_DOC = "Deprecated and ignored. Ambiguous Connect field/schema names are rejected.";
-  static final String XJC_OPTIONS_VERBOSE_DOC = "Deprecated and ignored. Logging is controlled by the worker logging configuration.";
   public final List<URL> schemaUrls;
   public final String schemaPackage;
 
@@ -64,24 +58,6 @@ class FromXmlConfig extends AbstractConfig {
                 .importance(ConfigDef.Importance.HIGH)
                 .validator(new ConfigDef.NonEmptyString())
                 .defaultValue(FromXmlConfig.class.getPackage().getName() + ".model")
-                .build()
-        ).define(
-            ConfigKeyBuilder.of(XJC_OPTIONS_STRICT_CHECK_CONFIG, ConfigDef.Type.BOOLEAN)
-                .documentation(XJC_OPTIONS_STRICT_CHECK_DOC)
-                .importance(ConfigDef.Importance.LOW)
-                .defaultValue(true)
-                .build()
-        ).define(
-            ConfigKeyBuilder.of(XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_CONFIG, ConfigDef.Type.BOOLEAN)
-                .documentation(XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_DOC)
-                .importance(ConfigDef.Importance.LOW)
-                .defaultValue(false)
-                .build()
-        ).define(
-            ConfigKeyBuilder.of(XJC_OPTIONS_VERBOSE_CONFIG, ConfigDef.Type.BOOLEAN)
-                .documentation(XJC_OPTIONS_VERBOSE_DOC)
-                .importance(ConfigDef.Importance.LOW)
-                .defaultValue(false)
                 .build()
         );
   }

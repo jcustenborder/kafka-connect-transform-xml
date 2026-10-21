@@ -131,18 +131,6 @@ prohibited, and document schema-location hints cannot load additional schemas.
 Null selected-side values pass through with their existing schemas. Headers,
 record metadata and the unselected key/value are preserved.
 
-### Legacy XJC settings
-
-The following names are accepted for configuration compatibility but deprecated,
-ignored, and logged when supplied:
-
-- `xjc.options.strict.check.enabled`
-- `xjc.options.automatic.name.conflict.resolution.enabled`
-- `xjc.options.verbose.enabled`
-
-None can disable XSD validation or enable unsupported mappings. Use worker logging
-configuration for diagnostic verbosity.
-
 ## Building and testing
 
 ```sh

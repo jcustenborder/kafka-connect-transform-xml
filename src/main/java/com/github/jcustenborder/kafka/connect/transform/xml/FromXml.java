@@ -108,13 +108,6 @@ public abstract class FromXml<R extends ConnectRecord<R>> implements Transformat
   @Override
   public void configure(Map<String, ?> settings) {
     FromXmlConfig config = new FromXmlConfig(settings);
-    for (String key : new String[]{FromXmlConfig.XJC_OPTIONS_STRICT_CHECK_CONFIG,
-        FromXmlConfig.XJC_OPTIONS_AUTOMATIC_NAME_CONFLICT_RESOLUTION_ENABLED_CONFIG,
-        FromXmlConfig.XJC_OPTIONS_VERBOSE_CONFIG}) {
-      if (settings.containsKey(key)) {
-        log.warn("{} is deprecated and ignored; XSD validation is always enabled", key);
-      }
-    }
     this.mapping = new XmlSchema(config);
     log.info("Configured XML-to-Struct mapping from {} XSD URL(s)", config.schemaUrls.size());
   }
